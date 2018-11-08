@@ -1,3 +1,5 @@
+package bdma.ulb.datamining
+
 class Test {
 
     public static void main(String[] args) {

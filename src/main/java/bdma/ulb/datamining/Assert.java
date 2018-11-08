@@ -1,3 +1,5 @@
+package bdma.ulb.datamining;
+
 import java.util.Objects;
 
 public class Assert {
