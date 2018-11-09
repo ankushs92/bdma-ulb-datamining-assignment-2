@@ -1,5 +1,7 @@
 package bdma.ulb.datamining;
 
+import bdma.ulb.datamining.util.Assert;
+
 import java.util.*;
 import java.util.stream.Collectors;
 

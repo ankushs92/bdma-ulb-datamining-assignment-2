@@ -1,4 +1,4 @@
-package bdma.ulb.datamining;
+package bdma.ulb.datamining.util;
 
 import java.util.Objects;
 
