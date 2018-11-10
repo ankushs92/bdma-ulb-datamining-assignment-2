@@ -145,6 +145,7 @@
     <findStrings>
       <find>pow</find>
       <find>pow(</find>
+      <find>toString</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
