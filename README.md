@@ -17,7 +17,7 @@ First, put the file location in fileLocation variable.
                                   .map(string -> string.split(","))
                                   .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])})  
                                   .collect(Collectors.toList());
-    
+ 
     double epsilon = 10;
     int minPts = 5;
     
@@ -31,4 +31,4 @@ First, put the file location in fileLocation variable.
 
 ```
 
-Or, if you prefer, go to Test.java, and just run the code
+Or, if you prefer, go to Test.java, and just run the code.
