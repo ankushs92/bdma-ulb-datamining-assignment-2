@@ -1,4 +1,4 @@
-package bdma.ulb.datamining;
+package bdma.ulb.datamining.model;
 
 public enum Label {
 

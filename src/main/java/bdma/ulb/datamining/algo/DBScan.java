@@ -1,19 +1,20 @@
-package bdma.ulb.datamining;
+package bdma.ulb.datamining.algo;
 
+import bdma.ulb.datamining.model.Label;
 import bdma.ulb.datamining.util.Assert;
+import bdma.ulb.datamining.util.Numbers;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static bdma.ulb.datamining.util.Numbers.*;
 import static java.util.Objects.isNull;
 
 public class DBScan {
 
-    private static final double ZERO = 0.0;
-
+    private final List<double[]> dataSet;
     private final double epsilon;
     private final int minPts;
-    private final List<double[]> dataSet;
 
     public DBScan(
             final List<double[]> dataSet,
@@ -22,12 +23,8 @@ public class DBScan {
     )
     {
         Assert.notNull(dataSet, "dataSet cannot be null");
-        if(epsilon <= ZERO) {
-            throw new IllegalArgumentException("epsilon must be a double value greater than 0");
-        }
-        if(minPts < ZERO) {
-            throw new IllegalArgumentException("minPts must be an integer greater than one");
-        }
+        Assert.isTrue(epsilon > ZERO, "epsilon must be a value greater than 0");
+        Assert.isTrue(minPts > ZERO, "minPts must be an integer greater than one");
         this.dataSet = dataSet;
         this.epsilon = epsilon;
         this.minPts = minPts;
@@ -53,7 +50,6 @@ public class DBScan {
         return clusters;
     }
 
-//    dataSet, point, cluster, neighbourhood, epsilon, minPts
     private List<double[]> expandCluster(
             final List<double[]> dataSet,
             final double[] point,

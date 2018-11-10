@@ -10,4 +10,10 @@ public class Assert {
         }
     }
 
+    public static void isTrue(final boolean expression, final String errorMsg) {
+        if(!expression) {
+            throw new IllegalArgumentException(errorMsg);
+        }
+    }
+
 }
