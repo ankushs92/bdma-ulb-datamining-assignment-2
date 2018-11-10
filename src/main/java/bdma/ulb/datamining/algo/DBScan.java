@@ -86,12 +86,9 @@ public class DBScan {
         final List<double[]> neighbours = new ArrayList<>();
         //All those points whose euclidean distance from 'point' is less than epsilon are in nbd
         dataSet.forEach(dataPoint -> {
-            //Don't include the point in the neighbourhood
-            if(!Arrays.equals(point, dataPoint)) {
-                final double distance = computeEuclideanDistance(point, dataPoint);
-                if(distance <= epsilon) {
-                    neighbours.add(dataPoint);
-                }
+            final double distance = computeEuclideanDistance(point, dataPoint);
+            if(distance <= epsilon) {
+                neighbours.add(dataPoint);
             }
         });
         return neighbours;
