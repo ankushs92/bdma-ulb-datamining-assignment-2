@@ -2,12 +2,14 @@ package bdma.ulb.datamining.algo;
 
 import bdma.ulb.datamining.model.Label;
 import bdma.ulb.datamining.util.Assert;
-import bdma.ulb.datamining.util.Numbers;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static bdma.ulb.datamining.util.Numbers.*;
+import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static java.util.Objects.isNull;
 
 public class DBScan {

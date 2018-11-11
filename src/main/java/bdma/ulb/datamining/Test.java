@@ -1,7 +1,6 @@
 package bdma.ulb.datamining;
 
 import bdma.ulb.datamining.algo.DBScan;
-import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
 import java.io.IOException;
 import java.nio.file.Files;

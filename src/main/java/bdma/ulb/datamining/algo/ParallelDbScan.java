@@ -4,23 +4,21 @@ import bdma.ulb.datamining.model.ComplexGrid;
 import bdma.ulb.datamining.model.Grid;
 import bdma.ulb.datamining.model.GridLabel;
 import bdma.ulb.datamining.util.Assert;
-import bdma.ulb.datamining.util.Numbers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import static bdma.ulb.datamining.util.Numbers.*;
+import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 public class ParallelDbScan {
 
@@ -53,7 +51,7 @@ public class ParallelDbScan {
     }
 
 
-    public List<List<double[]>> compute() {
+    public List<List<double[]>> compute() throws ExecutionException, InterruptedException {
         // First, divide the dataset into "partitions" number of grids
         final List<Grid> grids = splitIntoGrids(dataSet);
 
@@ -61,11 +59,40 @@ public class ParallelDbScan {
                                                             .filter(grid -> grid.getLabel() == GridLabel.NOT_DENSE)
                                                             .map(grid -> new ComplexGrid(singletonList(grid)))
                                                             .collect(toList());
-        final List<Grid> denseGrids = grids.stream()
-                                              .filter(grid -> grid.getLabel() == GridLabel.DENSE)
-                                              .collect(toList());
+
+        final List<ComplexGrid> denseComplexGrids = grids.stream()
+                                                         .filter(grid -> grid.getLabel() == GridLabel.DENSE)
+                                                         .collect(Collectors.groupingBy(Grid::getId))
+                                                         .entrySet()
+                                                         .stream()
+                                                         .map(entry -> new ComplexGrid(entry.getValue()))
+                                                         .collect(toList());
 
         //Multi threaded DBScan
+        final List<ComplexGrid> allComplexGrids = new ArrayList<>(nonDenseComplexGrids);
+        allComplexGrids.addAll(denseComplexGrids);
+
+        final List<Future<List<List<double[]>>>> resultPool = new ArrayList<>();
+        for(final ComplexGrid complexGrid : allComplexGrids) {
+            final Future<List<List<double[]>>> result = executor.submit( () -> {
+                List<double[]> dataSet = complexGrid.getGrids()
+                                                    .stream()
+                                                    .map(Grid::getDataPoints)
+                                                    .flatMap(Collection::stream)
+                                                    .collect(Collectors.toList());
+                final DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
+                final List<List<double[]>> clusters = dbScan.compute();
+                return clusters;
+            });
+            resultPool.add(result);
+        }
+
+        //Merging step
+        for(final Future<List<List<double[]>>> result : resultPool) {
+            final List<List<double[]>> cluster = result.get();
+        }
+
+
 
         try {
             executor.shutdown();
