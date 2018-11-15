@@ -3,7 +3,9 @@ package bdma.ulb.datamining.algo;
 import bdma.ulb.datamining.model.*;
 import bdma.ulb.datamining.util.Assert;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,19 +16,19 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import static bdma.ulb.datamining.model.GridLabel.*;
+import static bdma.ulb.datamining.model.GridLabel.DENSE;
+import static bdma.ulb.datamining.model.GridLabel.NOT_DENSE;
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static bdma.ulb.datamining.util.Util.isNullOrEmpty;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
-public class ParallelDBScan {
+public class ParallelDBScan implements IDbScan {
 
     private static final Logger log = LoggerFactory.getLogger(ParallelDBScan.class);
     private static final int cores = Runtime.getRuntime().availableProcessors();
@@ -56,16 +58,44 @@ public class ParallelDBScan {
         this.partitions = partitions;
     }
 
-
-    public List<Cluster> compute() throws ExecutionException, InterruptedException {
+    @Override
+    public List<Cluster> compute() throws Exception {
         // First, divide the dataset into "partitions" number of grids
-        final List<Grid> grids = splitIntoGrids(dataSet, 3);
-        System.out.println(grids.size());
-        grids.forEach(System.out::println);
+        final List<Grid> grids = splitIntoGrids(dataSet, partitions);
+
+        //Step 4 of main algorithm. We calculate epsilon nbd of every point, and build an adjacency list
+        final Multimap<String, Grid> adjacencyList =  HashMultimap.create();
+        for(final Grid grid : grids) {
+            final String gridId = grid.getId();
+            final List<double[]> points = grid.getDataPoints();
+            for(final double[] point : points) {
+                final List<double[]> neighbours = getNeighbours(point, dataSet, epsilon);
+                if (!isNullOrEmpty(neighbours)) {
+                    for(final double[] neighbour : neighbours) {
+                        final Grid neighbourPointGrid = grids.stream()
+                                                             .filter( it -> it.getDataPoints().stream().anyMatch(i -> Arrays.equals(neighbour, i)))
+                                                             .findFirst().get();
+//                        System.out.println("Is neighhourhood grid equal to current grid? " + Objects.equals(neighbourPointGrid, grid));
+                        if(!Objects.equals(neighbourPointGrid, grid)) {
+                            System.out.println("neighbourPointGrid " + neighbourPointGrid);
+                            System.out.println("Grid id " + gridId);
+                            adjacencyList.put(gridId, neighbourPointGrid);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        for (Entry<String, Grid> stringGridEntry : adjacencyList.entries()) {
+            System.out.println(stringGridEntry);
+        }
+
         final List<ComplexGrid> nonDenseComplexGrids = grids.stream()
                                                             .filter(grid -> grid.getLabel() == NOT_DENSE)
                                                             .map(grid -> new ComplexGrid(singletonList(grid)))
                                                             .collect(toList());
+
 
         //This is wrong
         final List<ComplexGrid> denseComplexGrids = grids.stream()
@@ -75,6 +105,7 @@ public class ParallelDBScan {
                                                          .stream()
                                                          .map(entry -> new ComplexGrid(entry.getValue()))
                                                          .collect(toList());
+
 
         //Multi threaded DBScan
         final List<ComplexGrid> allComplexGrids = new ArrayList<>(nonDenseComplexGrids);
@@ -111,7 +142,7 @@ public class ParallelDBScan {
         return null;
     }
 
-    private static final int numOfPartitions = 8;
+//    private static final int numOfPartitions = 8;
 
     private static final double DELTA = 0.01;
 
@@ -138,11 +169,11 @@ public class ParallelDBScan {
             final int size = projectionSorted.size();
             final double min = projectionSorted.get(0);
             final double max = projectionSorted.get(size - 1);
-            final double strideSize = strideSize(min, max, numOfPartitions) + DELTA;
+            final double strideSize = strideSize(min, max, partitions) + DELTA;
             log.info("Stride Size {}", strideSize);
 
             final List<RightOpenInterval> intervals = new ArrayList<>();
-            for(int i = 1; i <= numOfPartitions; i ++) {
+            for(int i = 1; i <= partitions; i ++) {
                 final double right =  min  + (i * strideSize);
                 final double left = min + ( (i - 1) * strideSize);
                 intervals.add(new RightOpenInterval(left, right));
@@ -168,12 +199,10 @@ public class ParallelDBScan {
             }
         }
 
-        cornerPointsList.forEach( cornerPoints -> log.info("CornerPoint {}", cornerPoints));
+        cornerPointsList.forEach( cornerPoints -> log.debug("CornerPoint {}", cornerPoints));
 
         //Now that we have created the p^n grids corner points, time to create grids
         final Multimap<String, double[]> gridPointRepository =  ArrayListMultimap.create();
-
-
 
         for(final double[] dataPoint : dataSet) {
             for(final GridCornerPoints cornerPoints : cornerPointsList) {
@@ -220,11 +249,8 @@ public class ParallelDBScan {
         return Precision.round((max - min )/ p, 2, BigDecimal.ROUND_HALF_DOWN);
     }
 
-    private int getWholeDataSetSize() {
-        return dataSet.size();
-    }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
 
 //        List<double[]> points = Arrays.asList(
 //                new double[]{1, 2},
@@ -245,12 +271,22 @@ public class ParallelDBScan {
 
 
 
+        ParallelDBScan parallelDBScan = new ParallelDBScan(
+                dataSet, 10, 5, 8
+        );
+
+        parallelDBScan.compute();
+
+
 //        List<double[]> points = Arrays.asList(
 //                new double[]{1.1},
 //                new double[]{2.1},
 //                new double[]{4.1}
 //        );
-        splitIntoGrids(dataSet, 3);
+//        List<Grid> grids = splitIntoGrids(dataSet, 8);
+//        for (Grid grid : grids) {
+//            System.out.println(grid);
+//        }
     }
 
 

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static java.util.Objects.isNull;
 
-public class DBScan {
+public class DBScan implements IDbScan {
 
     private final List<double[]> dataSet;
     private final double epsilon;
@@ -33,13 +33,14 @@ public class DBScan {
         this.minPts = minPts;
     }
 
+    @Override
     public List<Cluster> compute() {
         final List<Cluster> clusters = new ArrayList<>();
         final Map<double[], Label> visited = new HashMap<>();
         for(final double[] point : dataSet) {
             //Only unvisited points
             if(isNull(visited.get(point))) {
-                final List<double[]> neighbours = getNeighbours(point, dataSet);
+                final List<double[]> neighbours = getNeighbours(point, dataSet, epsilon);
                 //Core point
                 if(neighbours.size() >= minPts) {
                     final List<double[]> cluster = new ArrayList<>();
@@ -70,7 +71,7 @@ public class DBScan {
             final double[] current = seeds.get(index);
             final Label label = visited.get(current);
             if(isNull(label)) {
-                final List<double[]> currentNeighbourhood = getNeighbours(current, dataSet);
+                final List<double[]> currentNeighbourhood = getNeighbours(current, dataSet, epsilon);
                 if(currentNeighbourhood.size() >= minPts) {
                     seeds = merge(seeds, currentNeighbourhood);
                 }
@@ -84,26 +85,6 @@ public class DBScan {
         return cluster;
     }
 
-
-    private List<double[]> getNeighbours(final double[] point, final List<double[]> dataSet) {
-        final List<double[]> neighbours = new ArrayList<>();
-        //All those points whose euclidean distance from 'point' is less than epsilon are in nbd
-        dataSet.forEach(dataPoint -> {
-            final double distance = computeEuclideanDistance(point, dataPoint);
-            if(distance <= epsilon) {
-                neighbours.add(dataPoint);
-            }
-        });
-        return neighbours;
-    }
-
-    private static double computeEuclideanDistance(final double[] point1, final double[] point2) {
-        double sum = ZERO;
-        for(int index = 0; index < point1.length; index++) {
-            sum += Math.pow(point1[index] - point2[index], 2);
-        }
-        return Math.sqrt(sum);
-    }
 
     private List<double[]> merge(final List<double[]> one, final List<double[]> two) {
         final List<double[]> result = new ArrayList<>(one);

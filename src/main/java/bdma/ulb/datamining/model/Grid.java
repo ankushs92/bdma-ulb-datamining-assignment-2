@@ -1,9 +1,10 @@
 package bdma.ulb.datamining.model;
 
 import bdma.ulb.datamining.util.Assert;
+import bdma.ulb.datamining.util.Util;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Grid {
 
@@ -46,5 +47,28 @@ public class Grid {
 
     public String getId() {
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return "Grid {" +
+                "dataPoints=" + Util.stringRepresentation(dataPoints) +
+                ", label=" + label +
+                ", id='" + id + '\'' +
+                ", cornerPoints=" + cornerPoints +
+                '}' + ", SIZE = " + getCount();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final Grid grid = (Grid) o;
+        return Objects.equals(id, grid.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }
