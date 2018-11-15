@@ -11,6 +11,9 @@ repositories {
 }
 
 dependencies {
+    // https://mvnrepository.com/artifact/com.google.guava/guava
+    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+
     compile 'org.codehaus.groovy:groovy-all:2.3.11'
     // https://mvnrepository.com/artifact/org.apache.commons/commons-math3
     compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'

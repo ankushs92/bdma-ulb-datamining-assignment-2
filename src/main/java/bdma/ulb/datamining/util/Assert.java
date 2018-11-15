@@ -16,4 +16,10 @@ public class Assert {
         }
     }
 
+    public static void nonEmpty(final String string, final String errorMsg) {
+        if(!Strings.hasText(string)) {
+            throw new IllegalArgumentException(errorMsg);
+        }
+    }
+
 }

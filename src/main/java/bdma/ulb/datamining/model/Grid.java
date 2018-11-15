@@ -2,26 +2,34 @@ package bdma.ulb.datamining.model;
 
 import bdma.ulb.datamining.util.Assert;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Grid {
 
     private final List<double[]> dataPoints;
     private final GridLabel label;
-    private final int id;
+    private final String id;
+    private final GridCornerPoints cornerPoints;
 
     public Grid(
             final List<double[]> dataPoints,
             final GridLabel label,
-            final int id
+            final String id,
+            final GridCornerPoints cornerPoints
     )
     {
-        Assert.notNull(dataPoints, "dataPoints cannot be null");
         Assert.notNull(label, "label cannot be null");
+        Assert.notNull(label, "cornerPoints cannot be null");
 
         this.dataPoints = dataPoints;
         this.label = label;
         this.id = id;
+        this.cornerPoints = cornerPoints;
+    }
+
+    public void add(final double[] point) {
+        dataPoints.add(point);
     }
 
     public int getCount() {
@@ -36,7 +44,7 @@ public class Grid {
         return label;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 }

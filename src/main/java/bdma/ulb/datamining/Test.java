@@ -1,11 +1,14 @@
 package bdma.ulb.datamining;
 
 import bdma.ulb.datamining.algo.DBScan;
+import bdma.ulb.datamining.model.Cluster;
+import bdma.ulb.datamining.util.Util;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,20 +27,20 @@ public class Test {
         int minPts = 5;
 
         DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
-        List<List<double[]>> clusters = dbScan.compute();
+        List<Cluster> clusters = dbScan.compute();
 
-        for(List<double[]> cluster : clusters) {
+        for(Cluster cluster : clusters) {
             //This had to be done because the default toString representation of double[] is just the hash code
-//            System.out.println(stringRepresentation(cluster));
-            System.out.println(cluster.size());
+            System.out.println(Util.stringRepresentation(cluster.getDataPoints()));
+            System.out.println(cluster.getSize());
         }
 
-    }
+        final Multimap<String, double[]> gridPointRepository =  ArrayListMultimap.create();
+        gridPointRepository.put("1", new double[]{1});
+        gridPointRepository.put("1", new double[]{2});
+        gridPointRepository.put("3", new double[]{1});
+        System.out.println(gridPointRepository);
 
-    private static List<String> stringRepresentation(final List<double[]> points) {
-        return points.stream()
-                      .map(Arrays::toString)
-                      .collect(Collectors.toList());
     }
 
 

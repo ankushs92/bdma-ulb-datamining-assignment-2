@@ -1,5 +1,6 @@
 package bdma.ulb.datamining.algo;
 
+import bdma.ulb.datamining.model.Cluster;
 import bdma.ulb.datamining.model.Label;
 import bdma.ulb.datamining.util.Assert;
 
@@ -32,8 +33,8 @@ public class DBScan {
         this.minPts = minPts;
     }
 
-    public List<List<double[]>> compute() {
-        final List<List<double[]>> clusters = new ArrayList<>();
+    public List<Cluster> compute() {
+        final List<Cluster> clusters = new ArrayList<>();
         final Map<double[], Label> visited = new HashMap<>();
         for(final double[] point : dataSet) {
             //Only unvisited points
@@ -42,7 +43,7 @@ public class DBScan {
                 //Core point
                 if(neighbours.size() >= minPts) {
                     final List<double[]> cluster = new ArrayList<>();
-                    clusters.add(expandCluster(dataSet, point, neighbours, cluster, visited));
+                    clusters.add(new Cluster(expandCluster(dataSet, point, neighbours, cluster, visited)));
                 }
                 else {
                     visited.put(point, Label.NOISE);

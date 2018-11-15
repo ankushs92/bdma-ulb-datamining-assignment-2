@@ -10,7 +10,6 @@ public class ComplexGrid {
         this.grids = grids;
     }
 
-
     public List<Grid> getGrids() {
         return grids;
     }
