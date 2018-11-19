@@ -1,6 +1,8 @@
 package bdma.ulb.datamining.model;
 
 
+import java.util.List;
+
 public class ExtendedGrid {
 
     private final Grid grid;

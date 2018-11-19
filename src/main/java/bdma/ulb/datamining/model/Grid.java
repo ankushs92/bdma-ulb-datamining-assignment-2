@@ -3,12 +3,15 @@ package bdma.ulb.datamining.model;
 import bdma.ulb.datamining.util.Assert;
 import bdma.ulb.datamining.util.Util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class Grid {
 
     private final List<double[]> dataPoints;
+    private final List<double[]> extendedPoints;
     private final GridLabel label;
     private final String id;
     private final GridCornerPoints cornerPoints;
@@ -27,10 +30,17 @@ public class Grid {
         this.label = label;
         this.id = id;
         this.cornerPoints = cornerPoints;
+        this.extendedPoints = new ArrayList<>();
     }
 
     public void add(final double[] point) {
         dataPoints.add(point);
+    }
+
+    public List<double[]> getAllPoints() {
+        final List<double[]> points = new ArrayList<>(dataPoints);
+        points.addAll(extendedPoints);
+        return points;
     }
 
     public int getCount() {

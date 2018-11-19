@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static java.util.Objects.isNull;
+import static java.util.stream.Collectors.toList;
 
 public class DBScan implements IDbScan {
 
@@ -36,18 +37,18 @@ public class DBScan implements IDbScan {
     @Override
     public List<Cluster> compute() {
         final List<Cluster> clusters = new ArrayList<>();
-        final Map<double[], Label> visited = new HashMap<>();
+        final Map<double[], Label> visitedPoints = new HashMap<>();
         for(final double[] point : dataSet) {
             //Only unvisited points
-            if(isNull(visited.get(point))) {
+            if(isNull(visitedPoints.get(point))) {
                 final List<double[]> neighbours = getNeighbours(point, dataSet, epsilon);
                 //Core point
                 if(neighbours.size() >= minPts) {
                     final List<double[]> cluster = new ArrayList<>();
-                    clusters.add(new Cluster(expandCluster(dataSet, point, neighbours, cluster, visited)));
+                    clusters.add(new Cluster(expandCluster(dataSet, point, neighbours, cluster, visitedPoints)));
                 }
                 else {
-                    visited.put(point, Label.NOISE);
+                    visitedPoints.put(point, Label.NOISE);
                 }
             }
         }
@@ -59,26 +60,28 @@ public class DBScan implements IDbScan {
             final double[] point,
             final List<double[]> neighbours,
             final List<double[]> cluster,
-            final Map<double[], Label> visited
+            final Map<double[], Label> visitedPoints
     )
     {
         cluster.add(point);
-        visited.put(point, Label.PART_OF_CLUSTER);
+        visitedPoints.put(point, Label.PART_OF_CLUSTER);
 
         List<double[]> seeds = new ArrayList<>(neighbours);
         int index = 0;
+        //While loop used to escape Java's ConcurrentModificationException
         while(index < seeds.size()) {
-            final double[] current = seeds.get(index);
-            final Label label = visited.get(current);
+            final double[] currentPoint = seeds.get(index);
+            final Label label = visitedPoints.get(currentPoint);
             if(isNull(label)) {
-                final List<double[]> currentNeighbourhood = getNeighbours(current, dataSet, epsilon);
+                final List<double[]> currentNeighbourhood = getNeighbours(currentPoint, dataSet, epsilon);
                 if(currentNeighbourhood.size() >= minPts) {
+                    //Grow the cluster
                     seeds = merge(seeds, currentNeighbourhood);
                 }
             }
             if(label != Label.PART_OF_CLUSTER) {
-                visited.put(current, Label.PART_OF_CLUSTER);
-                cluster.add(current);
+                visitedPoints.put(currentPoint, Label.PART_OF_CLUSTER);
+                cluster.add(currentPoint);
             }
             index ++;
         }
@@ -89,7 +92,7 @@ public class DBScan implements IDbScan {
     private List<double[]> merge(final List<double[]> one, final List<double[]> two) {
         final List<double[]> result = new ArrayList<>(one);
         result.addAll(two);
-        return result.stream().distinct().collect(Collectors.toList());
+        return result.stream().distinct().collect(toList());
     }
 
 }

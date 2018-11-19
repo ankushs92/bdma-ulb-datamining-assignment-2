@@ -1,6 +1,7 @@
 package bdma.ulb.datamining.model;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Cluster {
 
@@ -15,7 +16,7 @@ public class Cluster {
     }
 
     public int getSize() {
-        return dataPoints.size();
+        return dataPoints.stream().distinct().collect(Collectors.toList()).size();
     }
 
 }

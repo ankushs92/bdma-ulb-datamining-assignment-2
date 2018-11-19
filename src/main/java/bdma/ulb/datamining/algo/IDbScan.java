@@ -23,6 +23,7 @@ public interface IDbScan {
         });
         return neighbours;
     }
+
     default double computeEuclideanDistance(final double[] point1, final double[] point2) {
         double sum = ZERO;
         for(int index = 0; index < point1.length; index++) {

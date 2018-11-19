@@ -3,8 +3,7 @@ package bdma.ulb.datamining.algo;
 import bdma.ulb.datamining.model.*;
 import bdma.ulb.datamining.util.Assert;
 import bdma.ulb.datamining.util.Util;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 import com.opencsv.CSVWriter;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
@@ -27,6 +26,7 @@ import static bdma.ulb.datamining.model.GridLabel.NOT_DENSE;
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static bdma.ulb.datamining.util.Util.isNullOrEmpty;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.*;
 import static java.util.stream.Collectors.toList;
 
 public class ParallelDBScan implements IDbScan {
@@ -65,25 +65,32 @@ public class ParallelDBScan implements IDbScan {
         final List<Grid> grids = splitIntoGrids(dataSet, partitions, epsilon);
         printToCsv(grids);
 
-        final List<ExtendedGrid> extendedGrids = buildExtendedGrids(grids, epsilon);
-        final List<ComplexGrid> denseComplexGrids = new ArrayList<>();
 
-        final Multimap<String, Grid> adjacencyList =  ArrayListMultimap.create();
-        for(final ExtendedGrid extendedGrid : extendedGrids) {
-            final Grid grid = extendedGrid.getGrid();
+        final SetMultimap<String, Grid> candidateEpsNbdGridsMultiMap = HashMultimap.create();
+        for(final Grid grid : grids) {
             final String gridId = grid.getId();
             final List<double[]> points = grid.getDataPoints();
-            for(final double[] point : points) {
-                final List<double[]> neighbours = getNeighbours(point, dataSet, epsilon);
-                if (!isNullOrEmpty(neighbours)) {
-                    for(final double[] neighbour : neighbours) {
-                        if(!Arrays.equals(neighbour, point)) {
-                            final Grid neighbourPointGrid = grids.stream()
-                                                                 .filter( it -> it.getDataPoints().stream().anyMatch(i -> Arrays.equals(neighbour, i)))
-                                                                 .findFirst()
-                                                                 .get();
+            final Map<double[], Boolean> visited = new HashMap<>();
+            int index = 0;
+            while(index < points.size() ) {
+                final double[] current = points.get(index);
+                index ++;
+                if(isNull(visited.get(current))) {
+                    visited.put(current, true);
+                    final List<double[]> neighbours = getNeighbours(current, dataSet, epsilon);
+                    if (!isNullOrEmpty(neighbours)) {
+
+                        for(final double[] neighbour : neighbours) {
+//                            System.out.println(Arrays.toString(neighbour));
+                            final Grid neighbourPointGrid = grids
+                                                                .stream()
+                                                                .filter( it -> it.getDataPoints().stream().anyMatch(i -> Arrays.equals(neighbour, i)))
+                                                                .findFirst()
+                                                                .get();
+
                             if(!Objects.equals(grid, neighbourPointGrid)) {
-                                adjacencyList.put(gridId, neighbourPointGrid);
+                                points.add(neighbour);
+                                candidateEpsNbdGridsMultiMap.put(gridId, neighbourPointGrid);
                             }
                         }
                     }
@@ -91,18 +98,38 @@ public class ParallelDBScan implements IDbScan {
             }
         }
 
+        final Map<String, Collection<Grid>> epsilonNbdGridsList = candidateEpsNbdGridsMultiMap.asMap();
+        final List<ComplexGrid> denseComplexGrids = new ArrayList<>();
 
         //Merge dense grids together
         for(final Grid grid : grids) {
             if(grid.isDense()) {
                 final String gridId = grid.getId();
-                List<Grid> neighbouringGrids = (List<Grid>) adjacencyList.get(gridId);
-                neighbouringGrids = neighbouringGrids.stream().filter(Grid ::isDense).collect(toList());
-                final List<Grid> complexGrids = new ArrayList<>(neighbouringGrids);
+
+                Set<Grid> gridsInEpsilonNbd = (Set<Grid>) epsilonNbdGridsList.get(gridId);
+                if(isNullOrEmpty(gridsInEpsilonNbd)) {
+                    gridsInEpsilonNbd = Collections.emptySet();
+                }
+                final Set<Grid> adjacentGrids = gridsInEpsilonNbd.stream() // Any grid that is in under epsilon nbd of a grid and shares a point with a grid, and is also dense , is adjacent
+                                                    .filter(Grid ::isDense)
+                                                    .collect(Collectors.toSet());
+                final List<Grid> complexGrids = new ArrayList<>(adjacentGrids);
                 complexGrids.add(grid);
                 denseComplexGrids.add(new ComplexGrid(complexGrids));
+
             }
         }
+
+        System.out.println("--PRINTING EPSILON NBD GRIDS---");
+        epsilonNbdGridsList.forEach((k,v) -> {
+            System.out.println(k + "----> " + v.stream().map(grid -> grid.getId()).collect(toList()) );
+        });
+
+
+        System.out.println("--Printing CompleX Grids---");
+        denseComplexGrids.forEach(c -> {
+            System.out.println("Complex Formed with Grid with ids " + c.getGridIds());
+        });
 
 
         final List<ComplexGrid> nonDenseComplexGrids = grids.stream()
@@ -138,16 +165,16 @@ public class ParallelDBScan implements IDbScan {
         }
 
         parallelComputationResults = parallelComputationResults.stream().filter( result -> result.getClusters().size() >= 1).collect(toList());
+
+
         parallelComputationResults.forEach(c -> {
-            System.out.println("Grid ids {} " + c.getComplexGrid().getGridIds());
+            System.out.println( c.getComplexGrid().getGridIds() + " -------->  ");
             for(Cluster cluster : c.getClusters()) {
                 System.out.println(cluster.getSize());
-
                 System.out.println(Util.stringRepresentation(cluster.getDataPoints()));
             }
+            System.out.println("-0-0-0-0-0-0-0-0-0-0-0");
         });
-//[12, 28, 20, 29, 39, 31, 35, 36, 37, 47, 39, 55]
-//        Merge 40, 42, 43, 44, 46, 48, 49, 52, 53
         //        List<Cluster> cluster1 = parallelComputationResults.get(0).getClusters();
 //        List<Cluster> clusters2 = Arrays.asList(
 //                parallelComputationResults.get(40).getClusters(),
@@ -186,8 +213,6 @@ public class ParallelDBScan implements IDbScan {
         }
         return null;
     }
-
-//    private static final int numOfPartitions = 8;
 
     private static final double DELTA = 0.01;
 
@@ -317,7 +342,6 @@ public class ParallelDBScan implements IDbScan {
     private static Cluster mergeClusters(final List<Cluster> clusters) {
         List<double[]> distinctPoints = new ArrayList<>();
         for(final Cluster cluster : clusters) {
-            System.out.println("Size " + cluster.getDataPoints().size());
             final List<double[]> points = cluster.getDataPoints();
             distinctPoints.addAll(points);
         }
@@ -341,7 +365,7 @@ public class ParallelDBScan implements IDbScan {
                                                                 final double xOrdinate = point[0];
                                                                 final double yOrdinate = point[1];
                                                                 if( (xOrdinate >= extendedMinX && xOrdinate < extendedMaxX)
-                                                                        && (yOrdinate >= extendedMinY && yOrdinate < extendedMaxY)
+                                                                 && (yOrdinate >= extendedMinY && yOrdinate < extendedMaxY)
                                                                 )
                                                                 {
                                                                     gridPoints.add(point);
