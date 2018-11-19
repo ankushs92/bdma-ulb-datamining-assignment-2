@@ -34,7 +34,7 @@ public class Grid {
     }
 
     public int getCount() {
-        return dataPoints.size();
+        return (int) dataPoints.stream().distinct().count();
     }
 
     public List<double[]> getDataPoints() {
@@ -47,6 +47,14 @@ public class Grid {
 
     public String getId() {
         return id;
+    }
+
+    public GridCornerPoints getCornerPoints() {
+        return cornerPoints;
+    }
+
+    public boolean isDense() {
+        return label == GridLabel.DENSE;
     }
 
     @Override

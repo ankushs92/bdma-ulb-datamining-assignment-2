@@ -3,8 +3,6 @@ package bdma.ulb.datamining;
 import bdma.ulb.datamining.algo.DBScan;
 import bdma.ulb.datamining.model.Cluster;
 import bdma.ulb.datamining.util.Util;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,11 +33,7 @@ public class Test {
             System.out.println(cluster.getSize());
         }
 
-        final Multimap<String, double[]> gridPointRepository =  ArrayListMultimap.create();
-        gridPointRepository.put("1", new double[]{1});
-        gridPointRepository.put("1", new double[]{2});
-        gridPointRepository.put("3", new double[]{1});
-        System.out.println(gridPointRepository);
+
 
     }
 

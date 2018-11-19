@@ -1,6 +1,7 @@
 package bdma.ulb.datamining.model;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ComplexGrid {
 
@@ -12,5 +13,9 @@ public class ComplexGrid {
 
     public List<Grid> getGrids() {
         return grids;
+    }
+
+    public List<String> getGridIds() {
+        return grids.stream().map(Grid :: getId).distinct().collect(Collectors.toList());
     }
 }
