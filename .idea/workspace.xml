@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bb3950bd-c5c9-435c-a2af-546ac1e184bc" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/DBScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/DBScan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/IDbScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/IDbScan.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Cluster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Cluster.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ExtendedGrid.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ExtendedGrid.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Grid.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Grid.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/.gradle/" />
@@ -30,8 +24,8 @@
       <file leaf-file-name="ParallelDBScan.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="271">
-              <caret line="130" column="46" selection-start-line="130" selection-start-column="40" selection-end-line="130" selection-end-column="46" />
+            <state relative-caret-position="111">
+              <caret line="118" column="43" selection-start-line="118" selection-start-column="43" selection-end-line="118" selection-end-column="43" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -800,16 +794,15 @@
       <workItem from="1542284870632" duration="11570000" />
       <workItem from="1542544290706" duration="27442000" />
       <workItem from="1542618268911" duration="26000" />
-      <workItem from="1542623391248" duration="25019000" />
+      <workItem from="1542623391248" duration="25778000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="143654000" />
+    <option name="totallyTimeSpent" value="144413000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="824" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info anchor="right" id="Palette" order="3" />
       <window_info anchor="right" id="sbt" order="10" />
@@ -828,7 +821,7 @@
       <window_info anchor="right" id="Palette&#9;" order="8" />
       <window_info id="Image Layers" order="6" />
       <window_info anchor="right" id="Capture Analysis" order="4" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49785408" visible="true" weight="0.32737276" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49785408" visible="true" weight="0.4759285" />
       <window_info anchor="bottom" id="Version Control" order="11" />
       <window_info anchor="bottom" id="Terminal" order="8" />
       <window_info content_ui="combo" id="Project" order="0" weight="0.3090129" />
@@ -848,7 +841,7 @@
       <window_info anchor="bottom" id="Build" order="10" weight="0.3278237" />
       <window_info id="Designer" order="2" />
       <window_info anchor="right" id="Palette" order="3" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49785408" visible="true" weight="0.43741402" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49785408" visible="true" weight="0.4759285" />
       <window_info anchor="right" id="sbt" order="10" />
       <window_info anchor="bottom" id="sbt-shell-toolwindow" order="7" />
       <window_info id="Image Layers" order="6" />
@@ -1266,8 +1259,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="271">
-          <caret line="130" column="46" selection-start-line="130" selection-start-column="40" selection-end-line="130" selection-end-column="46" />
+        <state relative-caret-position="111">
+          <caret line="118" column="43" selection-start-line="118" selection-start-column="43" selection-end-line="118" selection-end-column="43" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>

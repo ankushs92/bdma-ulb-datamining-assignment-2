@@ -65,6 +65,16 @@ public class ParallelDBScan implements IDbScan {
         final List<Grid> grids = splitIntoGrids(dataSet, partitions, epsilon);
         printToCsv(grids);
 
+        System.out.println("Printing Original Grids");
+        for(final Grid grid : grids) {
+            System.out.println("--------");
+            System.out.println("Grid Id " + grid.getId());
+            System.out.println("Grid Dense or NOT : " + grid.getLabel());
+            System.out.println("Original Size : " + grid.getCount());
+
+            System.out.println("--------");
+
+        }
 
         final SetMultimap<String, Grid> candidateEpsNbdGridsMultiMap = HashMultimap.create();
         for(final Grid grid : grids) {
@@ -97,6 +107,19 @@ public class ParallelDBScan implements IDbScan {
                 }
             }
         }
+        System.out.println("------------------------------------------------");
+
+        System.out.println("Printing GRIDS AFTER ADDING points ");
+        for(final Grid grid : grids) {
+            System.out.println("--------");
+            System.out.println("Grid Id " + grid.getId());
+            System.out.println("Grid Dense or NOT : " + grid.getLabel());
+            System.out.println("Actual Size : " + grid.getCount());
+
+            System.out.println("--------");
+        }
+        System.out.println("------------------------------------------------");
+
 
         final Map<String, Collection<Grid>> epsilonNbdGridsList = candidateEpsNbdGridsMultiMap.asMap();
         final List<ComplexGrid> denseComplexGrids = new ArrayList<>();
