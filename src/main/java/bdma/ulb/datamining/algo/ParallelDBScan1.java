@@ -35,7 +35,7 @@ public class ParallelDBScan1 implements IDbScan {
 
     private static final Logger log = LoggerFactory.getLogger(ParallelDBScan.class);
     private static final int cores = Runtime.getRuntime().availableProcessors();
-    private static final int workers = 3;  //For now
+    private static final int workers = cores;  //For now
     private static final ExecutorService executor = Executors.newFixedThreadPool(workers);
 
     private final List<double[]> dataSet;
@@ -317,23 +317,6 @@ public class ParallelDBScan1 implements IDbScan {
     }
 
 
-//    private static Multimap<String, Grid> createAdjacencyListOfNeighbours(final List<Grid> grids) {
-//        //Create adjacency list of neighbours
-//        final Multimap<String, Grid> result = ArrayListMultimap.create();
-//        for(final Grid grid : grids) {
-//            final GridCornerPoints gridCornerPoints = grid.getCornerPoints();
-//            for(final Grid otherGrid : grids) {
-//                if(!Objects.equals(grid, otherGrid)) {
-//                    final GridCornerPoints otherGridCornerPoints = otherGrid.getCornerPoints();
-//                    if(gridCornerPoints.hasAnyBoundaryPointCommon(otherGridCornerPoints)) {
-//                        result.put(grid.getId(), otherGrid);
-//                    }
-//                }
-//            }
-//        }
-//        return result;
-//    }
-
 
     private static Cluster mergeClusters(final List<Cluster> clusters) {
         List<double[]> distinctPoints = new ArrayList<>();
@@ -345,37 +328,9 @@ public class ParallelDBScan1 implements IDbScan {
         return new Cluster(distinctPoints);
     }
 
-    @SuppressWarnings("Duplicates")
-    private  List<ExtendedGrid> buildExtendedGrids(final List<Grid> grids, final double epsilon) {
-        final List<ExtendedGrid> extendedGrids = grids.stream()
-                .map(grid -> {
-                    final List<double[]> gridPoints = grid.getDataPoints();
-                    final GridCornerPoints cornerPoints = grid.getCornerPoints();
-                    final RightOpenInterval xAxisInterval = cornerPoints.getxAxisCornerPoints();
-                    final RightOpenInterval yAxisInterval = cornerPoints.getyAxisCornerPoints();
-                    final double extendedMinX  = xAxisInterval.getStart() - epsilon;
-                    final double extendedMaxX  = xAxisInterval.getEnd() + epsilon;
-                    final double extendedMinY = yAxisInterval.getStart() - epsilon;
-                    final double extendedMaxY  = yAxisInterval.getEnd() + epsilon;
-
-                    for(final double[] point : dataSet) {
-                        final double xOrdinate = point[0];
-                        final double yOrdinate = point[1];
-                        if( (xOrdinate >= extendedMinX && xOrdinate < extendedMaxX)
-                                && (yOrdinate >= extendedMinY && yOrdinate < extendedMaxY)
-                                )
-                        {
-                            gridPoints.add(point);
-                        }
-                    }
-                    return new ExtendedGrid(grid, epsilon);
-                })
-                .collect(toList());
-        return extendedGrids;
-    }
 
     private static void printToCsv(final List<Grid> grids) throws IOException {
-        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/bdma-ulb-datamining-dbscan/src/main/resources/test.csv"),
+        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/test.csv"),
                 CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
         final List<String[]> headers = new ArrayList<>();
         headers.add(new String[]{"id", "gridID", "label", "x", "y"});
@@ -394,7 +349,7 @@ public class ParallelDBScan1 implements IDbScan {
 
 
     private static void printComplexGrids(final List<ComplexGrid> complexGrids) throws IOException {
-        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/bdma-ulb-datamining-dbscan/src/main/resources/complex.csv"),
+        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/complex.csv"),
                 CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
         final List<String[]> headers = new ArrayList<>();
         headers.add(new String[]{"id", "complexID", "gridID", "label", "x", "y"});
@@ -420,7 +375,7 @@ public class ParallelDBScan1 implements IDbScan {
     }
 
     private static void printClusters(final List<List<Cluster>> clusters) throws IOException {
-        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/bdma-ulb-datamining-dbscan/src/main/resources/clusters.csv"),
+        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/clusters.csv"),
                 CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
         final List<String[]> headers = new ArrayList<>();
         headers.add(new String[]{"id", "clusterId", "x", "y"});
@@ -449,17 +404,7 @@ public class ParallelDBScan1 implements IDbScan {
 
     @SuppressWarnings("Duplicates")
     public static void main(String[] args) throws Exception {
-
-//        List<double[]> points = Arrays.asList(
-//                new double[]{1, 2},
-//                new double[]{0, 1} ,
-//                new double[]{9, 8},
-//                new double[]{11, 13},
-//                new double[]{7, 9},
-//                new double[]{6, 8}
-//        );
-
-        String fileLocation = "/Users/ankushsharma/Downloads/Factice_2Dexample.csv";
+        String fileLocation = "/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/Factice_2Dexample.csv";
         List<double[]> dataSet = Files.readAllLines(Paths.get(fileLocation))
                 .stream()
                 .map(string -> string.split(",")) // Each line is a string, we break it based on delimiter ',' . This gives us an array
@@ -472,8 +417,8 @@ public class ParallelDBScan1 implements IDbScan {
         int minPts = 5;
 //        DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
 
-        ParallelDBScan parallelDBScan = new ParallelDBScan(
-                dataSet, epsilon, minPts, 8
+        ParallelDBScan1 parallelDBScan = new ParallelDBScan1(
+                dataSet, epsilon, minPts, 2
         );
 
         parallelDBScan.compute();
