@@ -2,15 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bb3950bd-c5c9-435c-a2af-546ac1e184bc" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test1.groovy" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan1.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Tuple2.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/DBScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/DBScan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/IDbScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/IDbScan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan1.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan1.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Cluster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Cluster.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ComplexGrid.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ComplexGrid.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Grid.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Grid.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/.gradle/" />
@@ -28,12 +26,12 @@
     </projectState>
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="ParallelDBScan.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="ComplexGrid.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ComplexGrid.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="356">
-              <caret line="469" lean-forward="true" selection-start-line="469" selection-end-line="469" />
+            <state relative-caret-position="162">
+              <caret line="22" column="38" selection-start-line="22" selection-start-column="26" selection-end-line="22" selection-end-column="38" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -41,20 +39,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Grid.java" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Grid.java">
+      <file leaf-file-name="ParallelDBScan1.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan1.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="136">
-              <caret line="40" column="5" selection-start-line="38" selection-start-column="56" selection-end-line="40" selection-end-column="5" />
-              <folding>
-                <element signature="imports" expanded="true" />
-                <element signature="e#1075#1076#0" expanded="true" />
-                <element signature="e#1116#1117#0" expanded="true" />
-                <element signature="e#1362#1363#0" expanded="true" />
-                <element signature="e#1433#1434#0" expanded="true" />
-                <element signature="e#1478#1479#0" expanded="true" />
-                <element signature="e#1511#1512#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="117">
+              <caret line="175" column="74" selection-start-line="175" selection-start-column="74" selection-end-line="175" selection-end-column="74" />
             </state>
           </provider>
         </entry>
@@ -436,7 +425,6 @@
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDbScan.java" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Interval.java" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/RightOpenInterval.java" />
-        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Tuple2.java" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/util/Strings.java" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/util/Assert.java" />
         <option value="$PROJECT_DIR$/build.gradle" />
@@ -448,16 +436,18 @@
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ParallelComputationResult.java" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/GridLabel.java" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ExtendedGrid.java" />
-        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Cluster.java" />
-        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ComplexGrid.java" />
         <option value="$PROJECT_DIR$/src/main/resources/test.csv" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Grid.java" />
-        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java" />
-        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan1.java" />
-        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/DBScan.java" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test1.groovy" />
-        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/IDbScan.java" />
+        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java" />
         <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test.java" />
+        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Tuple.java" />
+        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Tuple2.java" />
+        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/IDbScan.java" />
+        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/DBScan.java" />
+        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Cluster.java" />
+        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ComplexGrid.java" />
+        <option value="$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan1.java" />
       </list>
     </option>
   </component>
@@ -527,6 +517,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -606,26 +597,14 @@
               <item name="dbscan" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="main" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
-              <item name="java" type="462c0819:PsiDirectoryNode" />
-              <item name="bdma" type="462c0819:PsiDirectoryNode" />
-              <item name="ulb" type="462c0819:PsiDirectoryNode" />
-              <item name="datamining" type="462c0819:PsiDirectoryNode" />
-              <item name="util" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="dbscan" type="b2602c69:ProjectViewProjectNode" />
-              <item name="dbscan" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="8a07ba80:GradleTreeStructureProvider$GradleModuleDirectoryNode" />
               <item name="resources" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="AndroidView" />
       <pane id="PackagesPane" />
-      <pane id="Scope" />
+      <pane id="AndroidView" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -784,9 +763,9 @@
     <recent_temporary>
       <list>
         <item itemvalue="Application.ParallelDBScan1" />
+        <item itemvalue="Application.ParallelDBScan" />
         <item itemvalue="Application.Test" />
         <item itemvalue="Application.Test1" />
-        <item itemvalue="Application.ParallelDBScan" />
         <item itemvalue="Application.DBScan" />
       </list>
     </recent_temporary>
@@ -835,41 +814,43 @@
       <workItem from="1542725086642" duration="10371000" />
       <workItem from="1542815492645" duration="2304000" />
       <workItem from="1542881374914" duration="85000" />
+      <workItem from="1542884803871" duration="278000" />
+      <workItem from="1542891198021" duration="3074000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="164615000" />
+    <option name="totallyTimeSpent" value="167967000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="823" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info anchor="right" id="Palette" order="3" />
-      <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="right" id="sbt" order="10" />
-      <window_info anchor="right" id="Palette&#9;" order="8" />
-      <window_info id="Image Layers" order="6" />
-      <window_info anchor="right" id="Capture Analysis" order="4" />
       <window_info anchor="bottom" id="Event Log" order="13" sideWeight="0.50214595" side_tool="true" weight="0.40577716" />
       <window_info anchor="right" id="Maven Projects" order="5" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.52288985" weight="0.3292011" />
-      <window_info anchor="bottom" id="Version Control" order="11" />
-      <window_info anchor="bottom" id="Terminal" order="8" />
       <window_info id="Capture Tool" order="5" />
       <window_info id="Designer" order="2" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.3211731" />
-      <window_info anchor="bottom" id="sbt-shell-toolwindow" order="7" />
       <window_info anchor="right" id="Database" order="7" />
-      <window_info anchor="right" id="Gradle" order="6" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info id="UI Designer" order="3" />
-      <window_info anchor="right" id="Theme Preview" order="9" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3994528" />
-      <window_info id="Favorites" order="4" side_tool="true" />
+      <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Messages" order="12" sideWeight="0.47711015" weight="0.24793388" />
+      <window_info anchor="right" id="Palette&#9;" order="8" />
+      <window_info id="Image Layers" order="6" />
+      <window_info anchor="right" id="Capture Analysis" order="4" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.52288985" weight="0.5082645" />
+      <window_info anchor="bottom" id="Version Control" order="11" />
+      <window_info anchor="bottom" id="Terminal" order="8" />
+      <window_info content_ui="combo" id="Project" order="0" weight="0.32546496" />
+      <window_info anchor="bottom" id="sbt-shell-toolwindow" order="7" />
+      <window_info anchor="right" id="Gradle" order="6" />
+      <window_info anchor="right" id="Theme Preview" order="9" />
+      <window_info id="Favorites" order="4" side_tool="true" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -882,10 +863,11 @@
       <window_info anchor="bottom" id="Build" order="10" weight="0.3278237" />
       <window_info id="Designer" order="2" />
       <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.52288985" visible="true" weight="0.5082645" />
       <window_info anchor="right" id="sbt" order="10" />
       <window_info anchor="bottom" id="sbt-shell-toolwindow" order="7" />
       <window_info id="Image Layers" order="6" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.52288985" visible="true" weight="0.5647383" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info id="UI Designer" order="3" />
@@ -893,15 +875,15 @@
       <window_info anchor="bottom" id="Terminal" order="8" />
       <window_info id="Capture Tool" order="5" />
       <window_info anchor="right" id="Capture Analysis" order="4" />
-      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="bottom" id="Event Log" order="13" sideWeight="0.50214595" side_tool="true" weight="0.40577716" />
       <window_info anchor="bottom" id="Messages" order="12" sideWeight="0.47711015" weight="0.24793388" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="11" />
       <window_info anchor="right" id="Maven Projects" order="5" />
       <window_info anchor="right" id="Gradle" order="6" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.31688127" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.32546496" />
       <window_info anchor="right" id="Database" order="7" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -909,7 +891,6 @@
       <window_info anchor="right" id="Theme Preview" order="9" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3994528" />
     </layout-to-restore>
   </component>
@@ -921,38 +902,10 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="1" />
+      <option name="time" value="2" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/src.zip!/java/lang/StringBuilder.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="69">
-          <caret line="404" column="18" selection-start-line="404" selection-start-column="18" selection-end-line="404" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/src.zip!/java/util/Arrays.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="232">
-          <caret line="4546" column="40" lean-forward="true" selection-start-line="4546" selection-start-column="40" selection-end-line="4546" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/src.zip!/java/lang/Object.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="143">
-          <caret line="235" column="59" selection-start-line="235" selection-start-column="59" selection-end-line="235" selection-end-column="59" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/src.zip!/java/lang/Integer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="651">
-          <caret line="231" column="25" selection-start-line="231" selection-start-column="25" selection-end-line="231" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
     <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/src.zip!/java/lang/String.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="680">
@@ -1186,17 +1139,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ParallelComputationResult.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="7" column="40" selection-start-line="7" selection-start-column="32" selection-end-line="7" selection-end-column="40" />
-          <folding>
-            <element signature="e#443#444#0" expanded="true" />
-            <element signature="e#477#478#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/resources/test.csv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3480">
@@ -1204,85 +1146,24 @@
         </state>
       </provider>
     </entry>
+    <entry file="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-math3/3.6.1/8fab23986ea8886af34818daf32a718e81dc98ba/commons-math3-3.6.1-sources.jar!/org/apache/commons/math3/exception/NotPositiveException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="25" column="13" selection-start-line="25" selection-start-column="13" selection-end-line="25" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
     <entry file="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-math3/3.6.1/8fab23986ea8886af34818daf32a718e81dc98ba/commons-math3-3.6.1-sources.jar!/org/apache/commons/math3/ml/clustering/DBSCANClusterer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="319">
-          <caret line="82" column="11" selection-start-line="82" selection-start-column="11" selection-end-line="82" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ComplexGrid.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="19" column="5" selection-start-line="17" selection-start-column="37" selection-end-line="19" selection-end-column="5" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Cluster.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="19" column="5" selection-start-line="17" selection-start-column="25" selection-end-line="19" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="281">
-          <caret line="40" column="10" lean-forward="true" selection-start-line="40" selection-start-column="10" selection-end-line="40" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/DBScan.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-354">
-          <caret line="15" column="13" selection-start-line="15" selection-start-column="13" selection-end-line="15" selection-end-column="13" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/IDbScan.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="125">
-          <caret line="21" column="13" lean-forward="true" selection-start-line="21" selection-start-column="13" selection-end-line="21" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test1.groovy">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="314">
-          <caret line="21" column="26" lean-forward="true" selection-start-line="21" selection-start-column="26" selection-end-line="21" selection-end-column="26" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan1.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="193">
-          <caret line="140" column="13" selection-start-line="140" selection-end-line="141" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="469" lean-forward="true" selection-start-line="469" selection-end-line="469" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
+        <state relative-caret-position="559">
+          <caret line="231" selection-start-line="224" selection-end-line="231" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Grid.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="136">
-          <caret line="40" column="5" selection-start-line="38" selection-start-column="56" selection-end-line="40" selection-end-column="5" />
+        <state relative-caret-position="321">
+          <caret line="35" column="48" selection-start-line="35" selection-start-column="8" selection-end-line="35" selection-end-column="48" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#1075#1076#0" expanded="true" />
@@ -1292,6 +1173,107 @@
             <element signature="e#1478#1479#0" expanded="true" />
             <element signature="e#1511#1512#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test1.groovy">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="23" column="29" lean-forward="true" selection-start-line="23" selection-start-column="29" selection-end-line="23" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ParallelComputationResult.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="100">
+          <caret line="7" column="40" selection-start-line="7" selection-start-column="32" selection-end-line="7" selection-end-column="40" />
+          <folding>
+            <element signature="e#443#444#0" expanded="true" />
+            <element signature="e#477#478#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="117">
+          <caret line="452" lean-forward="true" selection-start-line="448" selection-end-line="449" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/IDbScan.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="125">
+          <caret line="16" column="51" selection-start-line="16" selection-start-column="43" selection-end-line="16" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Tuple2.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="23" lean-forward="true" selection-start-column="23" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/Test.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="44">
+          <caret line="24" column="29" selection-start-line="24" selection-start-column="27" selection-end-line="24" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/src.zip!/java/util/List.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="233">
+          <caret line="144" column="18" selection-start-line="144" selection-start-column="18" selection-end-line="144" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/src.zip!/java/util/ArrayList.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="226">
+          <caret line="309" column="31" selection-start-line="309" selection-start-column="23" selection-end-line="309" selection-end-column="31" />
+          <folding>
+            <element signature="e#10907#10908#0" expanded="true" />
+            <element signature="e#10945#10946#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/Cluster.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="55">
+          <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/DBScan.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="244">
+          <caret line="96" selection-start-line="96" selection-end-line="96" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/model/ComplexGrid.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="162">
+          <caret line="22" column="38" selection-start-line="22" selection-start-column="26" selection-end-line="22" selection-end-column="38" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/bdma/ulb/datamining/algo/ParallelDBScan1.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="117">
+          <caret line="175" column="74" selection-start-line="175" selection-start-column="74" selection-end-line="175" selection-end-column="74" />
         </state>
       </provider>
     </entry>

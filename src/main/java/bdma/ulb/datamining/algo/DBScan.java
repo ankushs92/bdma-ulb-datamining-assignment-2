@@ -4,10 +4,7 @@ import bdma.ulb.datamining.model.Cluster;
 import bdma.ulb.datamining.model.Label;
 import bdma.ulb.datamining.util.Assert;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static java.util.Objects.isNull;
@@ -89,9 +86,14 @@ public class DBScan implements IDbScan {
 
 
     private List<double[]> merge(final List<double[]> one, final List<double[]> two) {
-        final List<double[]> result = new ArrayList<>(one);
-        result.addAll(two);
-        return result.stream().distinct().collect(toList());
+        final Set<double[]> oneSet = new HashSet<>(one);
+        for (final double[] point : two) {
+            if (!oneSet.contains(point)) {
+                one.add(point);
+            }
+        }
+        return one;
     }
+
 
 }

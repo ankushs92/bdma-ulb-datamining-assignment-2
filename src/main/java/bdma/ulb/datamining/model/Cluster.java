@@ -19,4 +19,13 @@ public class Cluster {
         return dataPoints.stream().distinct().collect(Collectors.toList()).size();
     }
 
+
+    public boolean doesPointBelongToCluster(final double[] points) {
+        boolean result = false;
+        if(dataPoints.contains(points)) {
+            result = true;
+        }
+        return result;
+    }
+
 }

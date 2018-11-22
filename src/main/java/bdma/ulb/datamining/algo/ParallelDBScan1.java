@@ -62,6 +62,7 @@ public class ParallelDBScan1 implements IDbScan {
     }
 
     @Override
+    @SuppressWarnings("Duplicates")
     public List<Cluster> compute() throws Exception {
         // First, divide the dataset into "partitions" number of grids
         final List<Grid> grids = splitIntoGrids(dataSet, partitions, epsilon);
@@ -171,11 +172,7 @@ public class ParallelDBScan1 implements IDbScan {
         final List<Future<ParallelComputationResult>> resultPool = new ArrayList<>();
         for(final ComplexGrid complexGrid : allComplexGrids) {
             final Future<ParallelComputationResult> result = executor.submit( () -> {
-                final List<double[]> dataSet = complexGrid.getGrids()
-                        .stream()
-                        .map(Grid::getAllPoints)
-                        .flatMap(Collection::stream)
-                        .collect(Collectors.toList());
+                final List<double[]> dataSet = complexGrid.getAllPoints();
                 final DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
                 final List<Cluster> clusters = dbScan.compute();
                 return new ParallelComputationResult(complexGrid, clusters);
@@ -214,7 +211,7 @@ public class ParallelDBScan1 implements IDbScan {
     }
 
     private static final double DELTA = 0.01;
-
+    @SuppressWarnings("Duplicates")
     private static List<Grid> splitIntoGrids(final List<double[]> dataSet, final int partitions, final double epsilon) {
         final int dataSetSize = dataSet.size();
         log.debug("Total points in DataSet {}", dataSetSize);
@@ -348,6 +345,7 @@ public class ParallelDBScan1 implements IDbScan {
         return new Cluster(distinctPoints);
     }
 
+    @SuppressWarnings("Duplicates")
     private  List<ExtendedGrid> buildExtendedGrids(final List<Grid> grids, final double epsilon) {
         final List<ExtendedGrid> extendedGrids = grids.stream()
                 .map(grid -> {
@@ -449,7 +447,7 @@ public class ParallelDBScan1 implements IDbScan {
         writer.close();
     }
 
-
+    @SuppressWarnings("Duplicates")
     public static void main(String[] args) throws Exception {
 
 //        List<double[]> points = Arrays.asList(
@@ -475,7 +473,7 @@ public class ParallelDBScan1 implements IDbScan {
 //        DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
 
         ParallelDBScan parallelDBScan = new ParallelDBScan(
-                dataSet, epsilon, minPts, 2
+                dataSet, epsilon, minPts, 8
         );
 
         parallelDBScan.compute();
