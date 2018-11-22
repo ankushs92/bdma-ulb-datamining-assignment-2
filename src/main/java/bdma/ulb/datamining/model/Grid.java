@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 public class Grid {
 
@@ -33,18 +36,18 @@ public class Grid {
         this.extendedPoints = new ArrayList<>();
     }
 
-    public void add(final double[] point) {
-        dataPoints.add(point);
+    public void addExtendedPoints(final double[] point) {
+        extendedPoints.add(point);
     }
 
     public List<double[]> getAllPoints() {
         final List<double[]> points = new ArrayList<>(dataPoints);
         points.addAll(extendedPoints);
-        return points;
+        return points.stream().distinct().collect(toList());
     }
 
     public int getCount() {
-        return (int) dataPoints.stream().distinct().count();
+        return (int) getAllPoints().stream().distinct().count();
     }
 
     public List<double[]> getDataPoints() {
@@ -70,7 +73,7 @@ public class Grid {
     @Override
     public String toString() {
         return "Grid {" +
-                "dataPoints=" + Util.stringRepresentation(dataPoints) +
+                "dataPoints=" + Util.stringRepresentation(getAllPoints()) +
                 ", label=" + label +
                 ", id='" + id + '\'' +
                 ", cornerPoints=" + cornerPoints +

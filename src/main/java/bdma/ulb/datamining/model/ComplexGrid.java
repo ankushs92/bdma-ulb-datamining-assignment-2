@@ -16,6 +16,6 @@ public class ComplexGrid {
     }
 
     public List<String> getGridIds() {
-        return grids.stream().map(Grid :: getId).distinct().collect(Collectors.toList());
+        return grids.stream().map(Grid :: getId).distinct().sorted().collect(Collectors.toList());
     }
 }

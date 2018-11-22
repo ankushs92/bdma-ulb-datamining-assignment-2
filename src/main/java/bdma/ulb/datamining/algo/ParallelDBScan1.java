@@ -9,6 +9,8 @@ import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.StringValueExp;
+import javax.swing.plaf.synth.SynthTabbedPaneUI;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -29,11 +31,11 @@ import static java.util.Collections.singletonList;
 import static java.util.Objects.*;
 import static java.util.stream.Collectors.toList;
 
-public class ParallelDBScan implements IDbScan {
+public class ParallelDBScan1 implements IDbScan {
 
     private static final Logger log = LoggerFactory.getLogger(ParallelDBScan.class);
     private static final int cores = Runtime.getRuntime().availableProcessors();
-    private static final int workers = cores * 199;  //For now
+    private static final int workers = 3;  //For now
     private static final ExecutorService executor = Executors.newFixedThreadPool(workers);
 
     private final List<double[]> dataSet;
@@ -41,7 +43,7 @@ public class ParallelDBScan implements IDbScan {
     private final int minPts;
     private final int partitions;
 
-    public ParallelDBScan(
+    public ParallelDBScan1(
             final List<double[]> dataSet,
             final double epsilon,
             final int minPts,
@@ -76,7 +78,7 @@ public class ParallelDBScan implements IDbScan {
 
         }
 
-        final SetMultimap<String, Grid> epsilonNbdGrids = HashMultimap.create();
+        final SetMultimap<String, Grid> candidateEpsNbdGridsMultiMap = HashMultimap.create();
         for(final Grid grid : grids) {
             final String gridId = grid.getId();
             final List<double[]> points = grid.getDataPoints();
@@ -86,21 +88,21 @@ public class ParallelDBScan implements IDbScan {
                 final double[] current = points.get(index);
                 index ++;
                 if(isNull(visited.get(current))) {
+                    //System.out.println("visiting " + index + " which is " + current);
                     visited.put(current, true);
                     final List<double[]> neighbours = getNeighbours(current, dataSet, epsilon);
                     if (!isNullOrEmpty(neighbours)) {
-                        for(final double[] neighbour : neighbours) {
-                            if(isWithinEpsilonBoundary(neighbour, grid.getCornerPoints(), epsilon)) {
-                                final Grid neighbourPointGrid = grids
-                                                                .stream()
-                                                                .filter( it -> it.getDataPoints().stream().anyMatch(i -> Arrays.equals(neighbour, i)))
-                                                                .findFirst()
-                                                                .get();
 
-                                if(!Objects.equals(grid, neighbourPointGrid)) {
-                                    points.add(neighbour);
-                                    epsilonNbdGrids.put(gridId, neighbourPointGrid);
-                                }
+                        for(final double[] neighbour : neighbours) {
+                            final Grid neighbourPointGrid = grids
+                                    .stream()
+                                    .filter( it -> it.getDataPoints().stream().anyMatch(i -> Arrays.equals(neighbour, i)))
+                                    .findFirst()
+                                    .get();
+
+                            if(!Objects.equals(grid, neighbourPointGrid)) {
+                                grid.addExtendedPoints(neighbour);
+                                candidateEpsNbdGridsMultiMap.put(gridId, neighbourPointGrid);
                             }
                         }
                     }
@@ -121,7 +123,7 @@ public class ParallelDBScan implements IDbScan {
         System.out.println("------------------------------------------------");
 
 
-        final Map<String, Collection<Grid>> epsilonNbdGridsList = epsilonNbdGrids.asMap();
+        final Map<String, Collection<Grid>> epsilonNbdGridsList = candidateEpsNbdGridsMultiMap.asMap();
         final List<ComplexGrid> denseComplexGrids = new ArrayList<>();
 
         //Merge dense grids together
@@ -134,11 +136,12 @@ public class ParallelDBScan implements IDbScan {
                     gridsInEpsilonNbd = Collections.emptySet();
                 }
                 final Set<Grid> adjacentGrids = gridsInEpsilonNbd.stream() // Any grid that is in under epsilon nbd of a grid and shares a point with a grid, and is also dense , is adjacent
-                                                    .filter(Grid ::isDense)
-                                                    .collect(Collectors.toSet());
+                        .filter(Grid ::isDense)
+                        .collect(Collectors.toSet());
                 final List<Grid> complexGrids = new ArrayList<>(adjacentGrids);
                 complexGrids.add(grid);
                 denseComplexGrids.add(new ComplexGrid(complexGrids));
+
             }
         }
 
@@ -150,28 +153,29 @@ public class ParallelDBScan implements IDbScan {
 
         System.out.println("--Printing CompleX Grids---");
         denseComplexGrids.forEach(c -> {
-            System.out.println("Complex Formed with Grid with ids " + c.getGridIds());
+            System.out.println("Complex Formed with Grid with ids " + c.getGridIds() + "with size " + denseComplexGrids.size());
         });
 
 
         final List<ComplexGrid> nonDenseComplexGrids = grids.stream()
-                                                            .filter(grid -> grid.getLabel() == NOT_DENSE)
-                                                            .map(grid -> new ComplexGrid(singletonList(grid)))
-                                                            .collect(toList());
+                .filter(grid -> grid.getLabel() == NOT_DENSE)
+                .map(grid -> new ComplexGrid(singletonList(grid)))
+                .collect(toList());
 
 
         //Multi threaded DBScan
         final List<ComplexGrid> allComplexGrids = new ArrayList<>(nonDenseComplexGrids);
         allComplexGrids.addAll(denseComplexGrids);
+        printComplexGrids(allComplexGrids);
 
         final List<Future<ParallelComputationResult>> resultPool = new ArrayList<>();
         for(final ComplexGrid complexGrid : allComplexGrids) {
             final Future<ParallelComputationResult> result = executor.submit( () -> {
                 final List<double[]> dataSet = complexGrid.getGrids()
-                                                          .stream()
-                                                          .map(Grid::getDataPoints)
-                                                          .flatMap(Collection::stream)
-                                                          .collect(Collectors.toList());
+                        .stream()
+                        .map(Grid::getAllPoints)
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList());
                 final DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
                 final List<Cluster> clusters = dbScan.compute();
                 return new ParallelComputationResult(complexGrid, clusters);
@@ -197,35 +201,8 @@ public class ParallelDBScan implements IDbScan {
             }
             System.out.println("-0-0-0-0-0-0-0-0-0-0-0");
         });
-        //        List<Cluster> cluster1 = parallelComputationResults.get(0).getClusters();
-//        List<Cluster> clusters2 = Arrays.asList(
-//                parallelComputationResults.get(40).getClusters(),
-//                parallelComputationResults.get(42).getClusters(),
-//                parallelComputationResults.get(43).getClusters(),
-//                parallelComputationResults.get(44).getClusters(),
-//                parallelComputationResults.get(46).getClusters(),
-//                parallelComputationResults.get(48).getClusters(),
-//                parallelComputationResults.get(49).getClusters(),
-//                parallelComputationResults.get(52).getClusters(),
-//                parallelComputationResults.get(53).getClusters()
-//        ).stream().flatMap(Collection :: stream).collect(toList());
-//        Cluster mergedCluster3 = mergeClusters(clusters2);
-        //        List<Cluster> cluster6 = parallelComputationResults.get(15).getClusters();
-//
-////        List<Cluster> clusters5 = parallelComputationResults.get(5).getClusters();
-////        List<Cluster> clusters6 = parallelComputationResults.get(6).getClusters();
-////        List<Cluster> clusters7 = parallelComputationResults.get(7).getClusters();
-//
-//        List<Cluster> testing = Arrays.asList(
-//                mergedCluster3
-//        );
-//        for(Cluster c : testing) {
-//            System.out.println(c.getSize());
-//
-//            System.out.println(Util.stringRepresentation(c.getDataPoints()));
-//        }
+        printClusters(parallelComputationResults.stream().map(p->p.getClusters()).collect(toList()));
 
-//
 
         try {
             executor.shutdown();
@@ -309,9 +286,9 @@ public class ParallelDBScan implements IDbScan {
                 final double yOrdinate = dataPoint[1];
 
                 if(
-                   (xOrdinate >= minX && xOrdinate < maxX) //Because it is RightSideOpen
-                && (yOrdinate >= minY && yOrdinate < maxY)
-                )
+                        (xOrdinate >= minX && xOrdinate < maxX) //Because it is RightSideOpen
+                                && (yOrdinate >= minY && yOrdinate < maxY)
+                        )
                 {
                     log.debug("Point {} belongs to {}", Arrays.toString(dataPoint), cornerPoints);
                     gridPointRepository.put(cornerPoints.getGridId(), dataPoint);
@@ -323,16 +300,16 @@ public class ParallelDBScan implements IDbScan {
         //THIS HAS TO CHANGE LATER
         final int totalGrids = (int) Math.pow(partitions, dimension);
         final List<Grid> grids = cornerPointsList.stream()
-                                                 .map(it -> {
-                                                     final List<double[]> initialPoints = (List<double[]>) gridPointRepository.get(it.getGridId());
-                                                     GridLabel gridLabel = NOT_DENSE;
-                                                     //We now extend the grid to epsilon in every direction
-                                                     final int gridSize = initialPoints.size();
-                                                     if(gridSize  >= ( 2 *  (dataSetSize / totalGrids)) ) {
-                                                         gridLabel = DENSE;
-                                                     }
-                                                     return new Grid(initialPoints, gridLabel, it.getGridId() , it);
-                                                }).collect(Collectors.toList());
+                .map(it -> {
+                    final List<double[]> initialPoints = (List<double[]>) gridPointRepository.get(it.getGridId());
+                    GridLabel gridLabel = NOT_DENSE;
+                    //We now extend the grid to epsilon in every direction
+                    final int gridSize = initialPoints.size();
+                    if(gridSize  >= ( 2 *  (dataSetSize / totalGrids)) ) {
+                        gridLabel = DENSE;
+                    }
+                    return new Grid(initialPoints, gridLabel, it.getGridId() , it);
+                }).collect(Collectors.toList());
 
         return grids;
     }
@@ -373,69 +350,102 @@ public class ParallelDBScan implements IDbScan {
 
     private  List<ExtendedGrid> buildExtendedGrids(final List<Grid> grids, final double epsilon) {
         final List<ExtendedGrid> extendedGrids = grids.stream()
-                                                      .map(grid -> {
-                                                            final List<double[]> gridPoints = grid.getDataPoints();
-                                                            final GridCornerPoints cornerPoints = grid.getCornerPoints();
-                                                            final RightOpenInterval xAxisInterval = cornerPoints.getxAxisCornerPoints();
-                                                            final RightOpenInterval yAxisInterval = cornerPoints.getyAxisCornerPoints();
-                                                            final double extendedMinX  = xAxisInterval.getStart() - epsilon;
-                                                            final double extendedMaxX  = xAxisInterval.getEnd() + epsilon;
-                                                            final double extendedMinY = yAxisInterval.getStart() - epsilon;
-                                                            final double extendedMaxY  = yAxisInterval.getEnd() + epsilon;
+                .map(grid -> {
+                    final List<double[]> gridPoints = grid.getDataPoints();
+                    final GridCornerPoints cornerPoints = grid.getCornerPoints();
+                    final RightOpenInterval xAxisInterval = cornerPoints.getxAxisCornerPoints();
+                    final RightOpenInterval yAxisInterval = cornerPoints.getyAxisCornerPoints();
+                    final double extendedMinX  = xAxisInterval.getStart() - epsilon;
+                    final double extendedMaxX  = xAxisInterval.getEnd() + epsilon;
+                    final double extendedMinY = yAxisInterval.getStart() - epsilon;
+                    final double extendedMaxY  = yAxisInterval.getEnd() + epsilon;
 
-                                                            for(final double[] point : dataSet) {
-                                                                final double xOrdinate = point[0];
-                                                                final double yOrdinate = point[1];
-                                                                if( (xOrdinate >= extendedMinX && xOrdinate < extendedMaxX)
-                                                                 && (yOrdinate >= extendedMinY && yOrdinate < extendedMaxY)
-                                                                )
-                                                                {
-                                                                    gridPoints.add(point);
-                                                                }
-                                                            }
-                                                            return new ExtendedGrid(grid, epsilon);
-                                                      })
-                                                      .collect(toList());
+                    for(final double[] point : dataSet) {
+                        final double xOrdinate = point[0];
+                        final double yOrdinate = point[1];
+                        if( (xOrdinate >= extendedMinX && xOrdinate < extendedMaxX)
+                                && (yOrdinate >= extendedMinY && yOrdinate < extendedMaxY)
+                                )
+                        {
+                            gridPoints.add(point);
+                        }
+                    }
+                    return new ExtendedGrid(grid, epsilon);
+                })
+                .collect(toList());
         return extendedGrids;
     }
 
-
-    private boolean isWithinEpsilonBoundary(final double[] point, final GridCornerPoints cornerPoints, final double epsilon) {
-        final RightOpenInterval xAxisInterval = cornerPoints.getxAxisCornerPoints();
-        final RightOpenInterval yAxisInterval = cornerPoints.getyAxisCornerPoints();
-        final double extendedMinX  = xAxisInterval.getStart() - epsilon;
-        final double extendedMaxX  = xAxisInterval.getEnd() + epsilon;
-        final double extendedMinY = yAxisInterval.getStart() - epsilon;
-        final double extendedMaxY  = yAxisInterval.getEnd() + epsilon;
-
-        final double xOrdinate = point[0];
-        final double yOrdinate = point[1];
-        boolean result = false;
-        if( (xOrdinate >= extendedMinX && xOrdinate < extendedMaxX)
-                && (yOrdinate >= extendedMinY && yOrdinate < extendedMaxY)
-                )
-        {
-            result = true;
-        }
-
-        return result;
-    }
-
-
     private static void printToCsv(final List<Grid> grids) throws IOException {
-        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/test.csv"),
-                                               CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
+        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/bdma-ulb-datamining-dbscan/src/main/resources/test.csv"),
+                CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
         final List<String[]> headers = new ArrayList<>();
-        headers.add(new String[]{"id", "label", "x", "y"});
+        headers.add(new String[]{"id", "gridID", "label", "x", "y"});
         writer.writeAll(headers);
-
+        int index = 0;
         for(final Grid grid : grids) {
             final List<String[]> output = new ArrayList<>();
             for(final double[] point : grid.getDataPoints()) {
-                output.add(new String[]{grid.getId(), grid.getLabel().name(), String.valueOf(point[0]), String.valueOf(point[1])});
+                output.add(new String[]{String.valueOf(index), grid.getId(), grid.getLabel().name(), String.valueOf(point[0]), String.valueOf(point[1])});
+                index++;
             }
             writer.writeAll(output);
         }
+        writer.close();
+    }
+
+
+    private static void printComplexGrids(final List<ComplexGrid> complexGrids) throws IOException {
+        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/bdma-ulb-datamining-dbscan/src/main/resources/complex.csv"),
+                CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
+        final List<String[]> headers = new ArrayList<>();
+        headers.add(new String[]{"id", "complexID", "gridID", "label", "x", "y"});
+        System.out.println("HEEEEEYYYYY " + complexGrids.size());
+        writer.writeAll(headers);
+        int index = 0;
+        int complexIndex = 0;
+        for(ComplexGrid c : complexGrids) {
+            System.out.println("HEEEEEYYYYY Complex Formed with Grid with ids " + c.getGridIds());
+            for(final Grid grid : c.getGrids()) {
+
+                final List<String[]> output = new ArrayList<>();
+                for(final double[] point : grid.getDataPoints()) {
+                    output.add(new String[]{String.valueOf(index), c.getGridIds().stream().collect(Collectors.joining("_")), grid.getId(), grid.getLabel().name(), String.valueOf(point[0]), String.valueOf(point[1])});
+                    index = index + 1;
+                }
+                writer.writeAll(output);
+            }
+
+        }
+
+        writer.close();
+    }
+
+    private static void printClusters(final List<List<Cluster>> clusters) throws IOException {
+        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/bdma-ulb-datamining-dbscan/src/main/resources/clusters.csv"),
+                CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
+        final List<String[]> headers = new ArrayList<>();
+        headers.add(new String[]{"id", "clusterId", "x", "y"});
+        System.out.println("HEEEEEYYYYY " + clusters.size());
+        writer.writeAll(headers);
+        int index = 0;
+        int complexIndex = 0;
+        for(List<Cluster> cS : clusters) {
+            final List<String[]> output = new ArrayList<>();
+            for(Cluster c : cS) {
+                //System.out.println("HEEEEEYYYYY Complex Formed with Grid with ids " + c.());
+
+                for(final double[] point : c.getDataPoints()) {
+                    output.add(new String[]{String.valueOf(index), String.valueOf(complexIndex), String.valueOf(point[0]), String.valueOf(point[1])});
+                    index = index + 1;
+
+                }
+                writer.writeAll(output);
+                complexIndex++;
+            }
+
+        }
+
         writer.close();
     }
 
@@ -453,11 +463,11 @@ public class ParallelDBScan implements IDbScan {
 
         String fileLocation = "/Users/ankushsharma/Downloads/Factice_2Dexample.csv";
         List<double[]> dataSet = Files.readAllLines(Paths.get(fileLocation))
-                                      .stream()
-                                      .map(string -> string.split(",")) // Each line is a string, we break it based on delimiter ',' . This gives us an array
-                                      .skip(1) //Skip the header
-                                      .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
-                                      .collect(Collectors.toList());
+                .stream()
+                .map(string -> string.split(",")) // Each line is a string, we break it based on delimiter ',' . This gives us an array
+                .skip(1) //Skip the header
+                .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
+                .collect(Collectors.toList());
 
 
         double epsilon = 10;

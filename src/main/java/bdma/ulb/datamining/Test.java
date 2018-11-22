@@ -3,6 +3,7 @@ package bdma.ulb.datamining;
 import bdma.ulb.datamining.algo.DBScan;
 import bdma.ulb.datamining.model.Cluster;
 import bdma.ulb.datamining.util.Util;
+import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,6 +22,8 @@ public class Test {
                                       .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
                                       .collect(Collectors.toList());
 
+//        double epsilon = 2;
+//        int minPts = 22;
         double epsilon = 10;
         int minPts = 5;
 
@@ -29,11 +32,16 @@ public class Test {
 
         for(Cluster cluster : clusters) {
             //This had to be done because the default toString representation of double[] is just the hash code
-            System.out.println(Util.stringRepresentation(cluster.getDataPoints()));
+//            System.out.println(Util.stringRepresentation(cluster.getDataPoints()));
             System.out.println(cluster.getSize());
         }
 
+        System.out.println(
+                clusters.stream().filter(n -> clusters.stream().filter(x -> x == n).count() > 1).collect(Collectors.toSet())
+        );
 
+//        DBSCANClusterer d = new DBSCANClusterer(epsilon, minPts);
+//        List list = d.cluster()
 
     }
 
