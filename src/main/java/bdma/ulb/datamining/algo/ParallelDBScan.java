@@ -86,6 +86,10 @@ public class ParallelDBScan implements IDbScan {
 
         final Map<String, Collection<Grid>> epsilonNbdGridsList = candidateEpsNbdGridsMultiMap.asMap();
 
+        for(final Entry<String, Collection<Grid>> entry : epsilonNbdGridsList.entrySet()) {
+            log.info("Grid Id : {}, Epsilon Nbd grids ----> ", entry.getKey(), entry.getValue().stream().map(Grid::getId).collect(toList()));
+        }
+
         final List<ComplexGrid> denseComplexGrids = buildDenseComplexGrids(grids, epsilonNbdGridsList);
         log.info("Number of Dense Complex Grids formed  {}", denseComplexGrids.size());
         final List<ComplexGrid> nonDenseComplexGrids = grids.stream()
@@ -116,7 +120,7 @@ public class ParallelDBScan implements IDbScan {
                                                                  .flatMap(Collection :: stream)
                                                                  .collect(toList());
 
-        log.info("Attempting to Merge clusters. We have {} clusters to merge {}", clusters.size());
+        log.info("Attempting to Merge clusters. We have {} clusters to merge", clusters.size());
         final List<Cluster> mergedCluster = mergeClusters(clusters);
         log.info("Final Result : Number of Clusters {}", clusters.size());
         mergedCluster.forEach(cluster -> {

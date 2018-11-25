@@ -24,9 +24,10 @@ public class Test {
         double epsilon = 1.8;
         int minPts = 1550;
         int workers = Runtime.getRuntime().availableProcessors();
+        int partitions = 2;
         long start = System.currentTimeMillis();
 
-        ParallelDBScan dbScan = new ParallelDBScan(dataSet, epsilon, minPts, workers, Runtime.getRuntime().availableProcessors());
+        ParallelDBScan dbScan = new ParallelDBScan(dataSet, epsilon, minPts, partitions, workers);
         List<Cluster> clusters = dbScan.compute();
 
         long stop = System.currentTimeMillis();
