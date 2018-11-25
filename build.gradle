@@ -13,14 +13,10 @@ repositories {
 dependencies {
     // https://mvnrepository.com/artifact/org.apache.commons/commons-collections4
     compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.2'
-
-    // https://mvnrepository.com/artifact/com.google.guava/guava
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
-// https://mvnrepository.com/artifact/com.opencsv/opencsv
     compile group: 'com.opencsv', name: 'opencsv', version: '4.3.2'
 
     compile 'org.codehaus.groovy:groovy-all:2.3.11'
-    // https://mvnrepository.com/artifact/org.apache.commons/commons-math3
     compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
     compile('ch.qos.logback:logback-classic:1.1.4')
     compile('ch.qos.logback:logback-core:1.1.4')

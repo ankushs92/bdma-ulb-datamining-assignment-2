@@ -5,8 +5,10 @@ import bdma.ulb.datamining.model.ComplexGrid;
 import bdma.ulb.datamining.model.Grid;
 import com.opencsv.CSVWriter;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,8 +29,11 @@ public class Util {
 
 
      public static void printComplexGrids(final List<ComplexGrid> complexGrids) throws IOException {
-        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/complex.csv"),
-                CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
+        final File file = new File("src/main/resources/complex.csv");
+        file.createNewFile();
+        final String path = file.getPath();
+        final CSVWriter writer = new CSVWriter(new FileWriter(path),
+                                     CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
         final List<String[]> headers = new ArrayList<>();
         headers.add(new String[]{"id", "complexID", "gridID", "label", "x", "y"});
         writer.writeAll(headers);
@@ -47,7 +52,10 @@ public class Util {
     }
 
     public static Map<Integer, Cluster> printClusters(final List<List<Cluster>> clusters) throws IOException {
-        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/clusters.csv"),
+        File file = new File("src/main/resources/clusters.csv");
+        file.createNewFile();
+        final String path = file.getPath();
+        final CSVWriter writer = new CSVWriter(new FileWriter(path),
                 CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
         final List<String[]> headers = new ArrayList<>();
         headers.add(new String[]{"id", "clusterId", "x", "y"});

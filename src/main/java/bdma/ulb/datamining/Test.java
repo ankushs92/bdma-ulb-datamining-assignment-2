@@ -20,15 +20,12 @@ public class Test {
                                       .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
                                       .collect(Collectors.toList());
 
-//        double epsilon = 2;
-//        int minPts = 22;
-//        double epsilon = 10;
-//        int minPts = 5;
         double epsilon = 1.8;
         int minPts = 1550;
+        int workers = Runtime.getRuntime().availableProcessors();
         long start = System.currentTimeMillis();
 
-        ParallelDBScan dbScan = new ParallelDBScan(dataSet, epsilon, minPts, 1, Runtime.getRuntime().availableProcessors());
+        ParallelDBScan dbScan = new ParallelDBScan(dataSet, epsilon, minPts, workers, Runtime.getRuntime().availableProcessors());
         List<Cluster> clusters = dbScan.compute();
 
         long stop = System.currentTimeMillis();
@@ -36,9 +33,6 @@ public class Test {
         for(Cluster cluster : clusters) {
             System.out.println(cluster.getSize());
         }
-
-//        DBSCANClusterer d = new DBSCANClusterer(epsilon, minPts);
-//        List list = d.cluster()
 
     }
 
