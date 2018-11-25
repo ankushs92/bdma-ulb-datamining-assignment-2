@@ -3,14 +3,14 @@ package bdma.ulb.datamining.algo;
 import bdma.ulb.datamining.model.*;
 import bdma.ulb.datamining.util.Assert;
 import bdma.ulb.datamining.util.Util;
-import com.google.common.collect.*;
-import com.opencsv.CSVWriter;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -19,14 +19,12 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static bdma.ulb.datamining.model.GridLabel.DENSE;
 import static bdma.ulb.datamining.model.GridLabel.NOT_DENSE;
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static bdma.ulb.datamining.util.Util.isNullOrEmpty;
-import static bdma.ulb.datamining.util.Util.printClusters;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
@@ -89,12 +87,13 @@ public class ParallelDBScan implements IDbScan {
         final Map<String, Collection<Grid>> epsilonNbdGridsList = candidateEpsNbdGridsMultiMap.asMap();
 
         final List<ComplexGrid> denseComplexGrids = buildDenseComplexGrids(grids, epsilonNbdGridsList);
-
+        log.info("Number of Dense Complex Grids formed  {}", denseComplexGrids.size());
         final List<ComplexGrid> nonDenseComplexGrids = grids.stream()
                                                             .filter(grid -> grid.getLabel() == NOT_DENSE)
                                                             .map(grid -> new ComplexGrid(singletonList(grid)))
                                                             .collect(toList());
 
+        log.info("Number of Non Desne Complex Grids formed  {}", nonDenseComplexGrids.size());
 
         //We need List of all Complex Grids, be it dense or non dense
         final List<ComplexGrid> allComplexGrids = new ArrayList<>(nonDenseComplexGrids);
@@ -102,6 +101,7 @@ public class ParallelDBScan implements IDbScan {
         Util.printComplexGrids(allComplexGrids);
 
         //We perform parallel DB Scan
+        log.info("Preparing to run parallel DB Scan");
         final List<Future<PartitionResult>> resultPoolFutures = performParallelDbScan(allComplexGrids);
 
         //Each DB Scan result is now available as a Java Future. Simply loop over all futures, and get the result from each worker thread
@@ -110,11 +110,20 @@ public class ParallelDBScan implements IDbScan {
             final PartitionResult pResult = resultFuture.get();
             parallelComputationResults.add(pResult);
         }
+        log.info("Parallel DB Scan executed successfully");
+        final List<Cluster> clusters = parallelComputationResults.stream()
+                                                                 .map(PartitionResult::getClusters)
+                                                                 .flatMap(Collection :: stream)
+                                                                 .collect(toList());
 
-        final Map<Integer, Cluster> clusterMap = printClusters(parallelComputationResults.stream().map(PartitionResult::getClusters).collect(toList()));
+        log.info("Attempting to Merge clusters. We have {} clusters to merge {}", clusters.size());
+        final List<Cluster> mergedCluster = mergeClusters(clusters);
+        log.info("Final Result : Number of Clusters {}", clusters.size());
+        mergedCluster.forEach(cluster -> {
+            log.info("Cluster Size {}", cluster.getSize());
+        });
 
-        final List<Cluster> mergedCluster = mergeClusters(new ArrayList<>(clusterMap.values()));
-
+        Util.printClusters(mergedCluster);
         try {
             executor.shutdown();
         }
@@ -469,7 +478,7 @@ public class ParallelDBScan implements IDbScan {
         int workers = Runtime.getRuntime().availableProcessors();
 
         ParallelDBScan parallelDBScan = new ParallelDBScan(
-                dataSet, epsilon, minPts, 9, workers
+                dataSet, epsilon, minPts, 8, workers
         );
         List<Cluster> clusters = parallelDBScan.compute();
 

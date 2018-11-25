@@ -2,7 +2,10 @@ package bdma.ulb.datamining.model;
 
 import org.apache.commons.collections.CollectionUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -16,7 +19,7 @@ public class Cluster {
     }
 
     public List<double[]> getDataPoints() {
-        return dataPoints;
+        return dataPoints.stream().distinct().collect(Collectors.toList());
     }
 
     public int getSize() {

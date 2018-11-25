@@ -8,7 +8,6 @@ import com.opencsv.CSVWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,7 +50,7 @@ public class Util {
         writer.close();
     }
 
-    public static Map<Integer, Cluster> printClusters(final List<List<Cluster>> clusters) throws IOException {
+    public static Map<Integer, Cluster> printClusters(final List<Cluster> clusters) throws IOException {
         File file = new File("src/main/resources/clusters.csv");
         file.createNewFile();
         final String path = file.getPath();
@@ -63,19 +62,16 @@ public class Util {
         Map<Integer, Cluster> clustersWithId = new HashMap<>();
         int index = 0;
         int complexIndex = 0;
-        for(List<Cluster> cS : clusters) {
-            final List<String[]> output = new ArrayList<>();
-            for(Cluster c : cS) {
-                clustersWithId.putIfAbsent(complexIndex, c);
-
-                for(final double[] point : c.getDataPoints()) {
-                    output.add(new String[]{String.valueOf(index), String.valueOf(complexIndex), String.valueOf(point[0]), String.valueOf(point[1])});
-                    index = index + 1;
-                }
-                writer.writeAll(output);
-                complexIndex++;
+        final List<String[]> output = new ArrayList<>();
+        for(final Cluster cluster : clusters) {
+            clustersWithId.putIfAbsent(complexIndex, cluster);
+            for(final double[] point : cluster.getDataPoints()) {
+                output.add(new String[]{String.valueOf(index), String.valueOf(complexIndex), String.valueOf(point[0]), String.valueOf(point[1])});
+                index = index + 1;
             }
+            complexIndex++;
         }
+        writer.writeAll(output);
 
         writer.close();
         return clustersWithId;

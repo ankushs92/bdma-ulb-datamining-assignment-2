@@ -1,9 +1,5 @@
 package bdma.ulb.datamining.model;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-
 public class GridCornerPoints {
 
     private final String gridId;
