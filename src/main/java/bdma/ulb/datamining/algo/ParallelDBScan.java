@@ -69,12 +69,20 @@ public class ParallelDBScan implements IDbScan {
     @Override
     @SuppressWarnings("Duplicates")
     public List<Cluster> compute() throws Exception {
+        log.info("Creating {} grids", Math.pow(partitions,2 ));
         // First, divide the dataset into "partitions" number of grids
         final List<Grid> grids = splitIntoGrids(dataSet, partitions);
 
         //Build a Cache of Grid points. Each key is a point in the dataset, and has the "Grid Id" as value associated with it
+        log.info("Building Grid Cache");
         final Map<double[], String> gridCache = buildGridCache(grids);
+
+        log.info("Building Adjacency List of neighbours");
         final Map<String, Set<Grid>> adjacencyListOfNeighbours = createAdjacencyListOfNeighbours(grids,epsilon);
+        adjacencyListOfNeighbours.forEach((k, v) -> {
+            log.info("Grid Id {} . Adjacency list ->", k, getGridIds(v));
+        });
+
 
         final SetMultimap<String, Grid> candidateEpsNbdGridsMultiMap = buildExtendedGrids(grids, adjacencyListOfNeighbours, gridCache);
 
@@ -437,7 +445,11 @@ public class ParallelDBScan implements IDbScan {
         return adjacencyList;
     }
 
-
+    public Set<String> getGridIds(final Set<Grid> grids) {
+        return grids.stream()
+                    .map(Grid::getId)
+                    .collect(Collectors.toSet());
+    }
 
 
 
