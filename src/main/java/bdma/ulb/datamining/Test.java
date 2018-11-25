@@ -1,11 +1,9 @@
 package bdma.ulb.datamining;
 
-import bdma.ulb.datamining.algo.DBScan;
-import bdma.ulb.datamining.model.Cluster;
-import bdma.ulb.datamining.util.Util;
-import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
-import java.io.IOException;
+import bdma.ulb.datamining.algo.ParallelDBScan;
+import bdma.ulb.datamining.model.Cluster;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -13,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class Test {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         String fileLocation = "/Users/ankushsharma/Downloads/ex_Aggregation.csv";
         List<double[]> dataSet = Files.readAllLines(Paths.get(fileLocation))
                                       .stream()
@@ -29,13 +27,13 @@ public class Test {
         double epsilon = 1.8;
         int minPts = 1550;
         long start = System.currentTimeMillis();
-        DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
+
+        ParallelDBScan dbScan = new ParallelDBScan(dataSet, epsilon, minPts, 1, Runtime.getRuntime().availableProcessors());
         List<Cluster> clusters = dbScan.compute();
+
         long stop = System.currentTimeMillis();
-        System.out.println("Time taken " + (stop-start)/1000) ;
+        System.out.println("Time taken " + (stop-start) / 1000) ;
         for(Cluster cluster : clusters) {
-            //This had to be done because the default toString representation of double[] is just the hash code
-//            System.out.println(Util.stringRepresentation(cluster.getDataPoints()));
             System.out.println(cluster.getSize());
         }
 

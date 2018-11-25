@@ -19,140 +19,68 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static bdma.ulb.datamining.model.GridLabel.DENSE;
 import static bdma.ulb.datamining.model.GridLabel.NOT_DENSE;
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static bdma.ulb.datamining.util.Util.isNullOrEmpty;
+import static bdma.ulb.datamining.util.Util.printClusters;
 import static java.util.Collections.singletonList;
-import static java.util.Objects.*;
+import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
 
 public class ParallelDBScan implements IDbScan {
 
     private static final Logger log = LoggerFactory.getLogger(ParallelDBScan.class);
-    private static final int cores = Runtime.getRuntime().availableProcessors();
-    private static final int workers = cores * 199;  //For now
-    private static final ExecutorService executor = Executors.newFixedThreadPool(workers);
+    private final ExecutorService executor;
 
     private final List<double[]> dataSet;
     private final double epsilon;
     private final int minPts;
     private final int partitions;
+    private final int workers;
 
     public ParallelDBScan(
             final List<double[]> dataSet,
             final double epsilon,
             final int minPts,
-            final int partitions
+            final int partitions,
+            final int workers
     )
     {
         Assert.notNull(dataSet, "dataSet cannot be null");
         Assert.isTrue(epsilon > ZERO, "epsilon must be a double value greater than 0");
         Assert.isTrue(minPts > ZERO, "minPts must be an integer greater than one");
         Assert.isTrue(partitions > ZERO, "minPts must be an integer greater than one");
+        Assert.isTrue(workers > ZERO, "workers must be an integer greater than one");
+
 
         this.dataSet = dataSet;
         this.epsilon = epsilon;
         this.minPts = minPts;
         this.partitions = partitions;
+        this.workers = workers;
+        log.info("Initializing Task pool with {} worker threads", workers);
+        this.executor = Executors.newFixedThreadPool(workers);
     }
 
     @Override
+    @SuppressWarnings("Duplicates")
     public List<Cluster> compute() throws Exception {
         // First, divide the dataset into "partitions" number of grids
-        final List<Grid> grids = splitIntoGrids(dataSet, partitions, epsilon);
-        printToCsv(grids);
+        final List<Grid> grids = splitIntoGrids(dataSet, partitions);
 
-        System.out.println("Printing Original Grids");
-        for(final Grid grid : grids) {
-            System.out.println("--------");
-            System.out.println("Grid Id " + grid.getId());
-            System.out.println("Grid Dense or NOT : " + grid.getLabel());
-            System.out.println("Original Size : " + grid.getCount());
+        //Build a Cache of Grid points. Each key is a point in the dataset, and has the "Grid Id" as value associated with it
+        final Map<double[], String> gridCache = buildGridCache(grids);
+        final Map<String, Set<Grid>> adjacencyListOfNeighbours = createAdjacencyListOfNeighbours(grids,epsilon);
 
-            System.out.println("--------");
+        final SetMultimap<String, Grid> candidateEpsNbdGridsMultiMap = buildExtendedGrids(grids, adjacencyListOfNeighbours, gridCache);
 
-        }
+        final Map<String, Collection<Grid>> epsilonNbdGridsList = candidateEpsNbdGridsMultiMap.asMap();
 
-        final SetMultimap<String, Grid> epsilonNbdGrids = HashMultimap.create();
-        for(final Grid grid : grids) {
-            final String gridId = grid.getId();
-            final List<double[]> points = grid.getDataPoints();
-            final Map<double[], Boolean> visited = new HashMap<>();
-            int index = 0;
-            while(index < points.size() ) {
-                final double[] current = points.get(index);
-                index ++;
-                if(isNull(visited.get(current))) {
-                    visited.put(current, true);
-                    final List<double[]> neighbours = getNeighbours(current, dataSet, epsilon);
-                    if (!isNullOrEmpty(neighbours)) {
-                        for(final double[] neighbour : neighbours) {
-                            if(isWithinEpsilonBoundary(neighbour, grid.getCornerPoints(), epsilon)) {
-                                final Grid neighbourPointGrid = grids
-                                                                .stream()
-                                                                .filter( it -> it.getDataPoints().stream().anyMatch(i -> Arrays.equals(neighbour, i)))
-                                                                .findFirst()
-                                                                .get();
-
-                                if(!Objects.equals(grid, neighbourPointGrid)) {
-                                    points.add(neighbour);
-                                    epsilonNbdGrids.put(gridId, neighbourPointGrid);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        System.out.println("------------------------------------------------");
-
-        System.out.println("Printing GRIDS AFTER ADDING points ");
-        for(final Grid grid : grids) {
-            System.out.println("--------");
-            System.out.println("Grid Id " + grid.getId());
-            System.out.println("Grid Dense or NOT : " + grid.getLabel());
-            System.out.println("Actual Size : " + grid.getCount());
-
-            System.out.println("--------");
-        }
-        System.out.println("------------------------------------------------");
-
-
-        final Map<String, Collection<Grid>> epsilonNbdGridsList = epsilonNbdGrids.asMap();
-        final List<ComplexGrid> denseComplexGrids = new ArrayList<>();
-
-        //Merge dense grids together
-        for(final Grid grid : grids) {
-            if(grid.isDense()) {
-                final String gridId = grid.getId();
-
-                Set<Grid> gridsInEpsilonNbd = (Set<Grid>) epsilonNbdGridsList.get(gridId);
-                if(isNullOrEmpty(gridsInEpsilonNbd)) {
-                    gridsInEpsilonNbd = Collections.emptySet();
-                }
-                final Set<Grid> adjacentGrids = gridsInEpsilonNbd.stream() // Any grid that is in under epsilon nbd of a grid and shares a point with a grid, and is also dense , is adjacent
-                                                    .filter(Grid ::isDense)
-                                                    .collect(Collectors.toSet());
-                final List<Grid> complexGrids = new ArrayList<>(adjacentGrids);
-                complexGrids.add(grid);
-                denseComplexGrids.add(new ComplexGrid(complexGrids));
-            }
-        }
-
-        System.out.println("--PRINTING EPSILON NBD GRIDS---");
-        epsilonNbdGridsList.forEach((k,v) -> {
-            System.out.println(k + "----> " + v.stream().map(grid -> grid.getId()).collect(toList()) );
-        });
-
-
-        System.out.println("--Printing CompleX Grids---");
-        denseComplexGrids.forEach(c -> {
-            System.out.println("Complex Formed with Grid with ids " + c.getGridIds());
-        });
-
+        final List<ComplexGrid> denseComplexGrids = buildDenseComplexGrids(grids, epsilonNbdGridsList);
 
         final List<ComplexGrid> nonDenseComplexGrids = grids.stream()
                                                             .filter(grid -> grid.getLabel() == NOT_DENSE)
@@ -160,72 +88,24 @@ public class ParallelDBScan implements IDbScan {
                                                             .collect(toList());
 
 
-        //Multi threaded DBScan
+        //We need List of all Complex Grids, be it dense or non dense
         final List<ComplexGrid> allComplexGrids = new ArrayList<>(nonDenseComplexGrids);
         allComplexGrids.addAll(denseComplexGrids);
+        Util.printComplexGrids(allComplexGrids);
 
-        final List<Future<ParallelComputationResult>> resultPool = new ArrayList<>();
-        for(final ComplexGrid complexGrid : allComplexGrids) {
-            final Future<ParallelComputationResult> result = executor.submit( () -> {
-                final List<double[]> dataSet = complexGrid.getGrids()
-                                                          .stream()
-                                                          .map(Grid::getDataPoints)
-                                                          .flatMap(Collection::stream)
-                                                          .collect(Collectors.toList());
-                final DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
-                final List<Cluster> clusters = dbScan.compute();
-                return new ParallelComputationResult(complexGrid, clusters);
-            });
-            resultPool.add(result);
-        }
+        //We perform parallel DB Scan
+        final List<Future<PartitionResult>> resultPoolFutures = performParallelDbScan(allComplexGrids);
 
-        //Merging step
-        List<ParallelComputationResult> parallelComputationResults = new ArrayList<>();
-        for(final Future<ParallelComputationResult> result : resultPool) {
-            final ParallelComputationResult pResult = result.get();
+        //Each DB Scan result is now available as a Java Future. Simply loop over all futures, and get the result from each worker thread
+        final List<PartitionResult> parallelComputationResults = new ArrayList<>();
+        for(final Future<PartitionResult> resultFuture : resultPoolFutures) {
+            final PartitionResult pResult = resultFuture.get();
             parallelComputationResults.add(pResult);
         }
 
-        parallelComputationResults = parallelComputationResults.stream().filter( result -> result.getClusters().size() >= 1).collect(toList());
+        final Map<Integer, Cluster> clusterMap = printClusters(parallelComputationResults.stream().map(PartitionResult::getClusters).collect(toList()));
 
-
-        parallelComputationResults.forEach(c -> {
-            System.out.println( c.getComplexGrid().getGridIds() + " -------->  ");
-            for(Cluster cluster : c.getClusters()) {
-                System.out.println(cluster.getSize());
-                System.out.println(Util.stringRepresentation(cluster.getDataPoints()));
-            }
-            System.out.println("-0-0-0-0-0-0-0-0-0-0-0");
-        });
-        //        List<Cluster> cluster1 = parallelComputationResults.get(0).getClusters();
-//        List<Cluster> clusters2 = Arrays.asList(
-//                parallelComputationResults.get(40).getClusters(),
-//                parallelComputationResults.get(42).getClusters(),
-//                parallelComputationResults.get(43).getClusters(),
-//                parallelComputationResults.get(44).getClusters(),
-//                parallelComputationResults.get(46).getClusters(),
-//                parallelComputationResults.get(48).getClusters(),
-//                parallelComputationResults.get(49).getClusters(),
-//                parallelComputationResults.get(52).getClusters(),
-//                parallelComputationResults.get(53).getClusters()
-//        ).stream().flatMap(Collection :: stream).collect(toList());
-//        Cluster mergedCluster3 = mergeClusters(clusters2);
-        //        List<Cluster> cluster6 = parallelComputationResults.get(15).getClusters();
-//
-////        List<Cluster> clusters5 = parallelComputationResults.get(5).getClusters();
-////        List<Cluster> clusters6 = parallelComputationResults.get(6).getClusters();
-////        List<Cluster> clusters7 = parallelComputationResults.get(7).getClusters();
-//
-//        List<Cluster> testing = Arrays.asList(
-//                mergedCluster3
-//        );
-//        for(Cluster c : testing) {
-//            System.out.println(c.getSize());
-//
-//            System.out.println(Util.stringRepresentation(c.getDataPoints()));
-//        }
-
-//
+        final List<Cluster> mergedCluster = mergeClusters(new ArrayList<>(clusterMap.values()));
 
         try {
             executor.shutdown();
@@ -233,12 +113,42 @@ public class ParallelDBScan implements IDbScan {
         catch(final Exception ex) {
             log.error("" ,ex);
         }
-        return null;
+        return mergedCluster;
+    }
+
+
+    private static double strideSize(final double min, final double max, final int p) {
+        return Precision.round((max - min )/ p, 2, BigDecimal.ROUND_HALF_DOWN);
+    }
+
+
+    private Map<double[], String> buildGridCache(final List<Grid> grids) {
+        final Map<double[], String> gridCache = new HashMap<>();
+        for(final Grid grid : grids) {
+            for(final double[] point : grid.getDataPoints()) {
+                gridCache.put(point, grid.getId());
+            }
+        }
+        return gridCache;
+    }
+
+    private List<Future<PartitionResult>> performParallelDbScan(final List<ComplexGrid> complexGrids) {
+        final List<Future<PartitionResult>> resultPoolFutures = new ArrayList<>();
+        for(final ComplexGrid complexGrid : complexGrids) {
+            final Future<PartitionResult> result = executor.submit( () -> {
+                final List<double[]> dataSet = complexGrid.getAllPoints();
+                final DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
+                final List<Cluster> clusters = dbScan.compute();
+                return new PartitionResult(clusters);
+            });
+            resultPoolFutures.add(result);
+        }
+        return resultPoolFutures;
     }
 
     private static final double DELTA = 0.01;
 
-    private static List<Grid> splitIntoGrids(final List<double[]> dataSet, final int partitions, final double epsilon) {
+    private static List<Grid> splitIntoGrids(final List<double[]> dataSet, final int partitions) {
         final int dataSetSize = dataSet.size();
         log.debug("Total points in DataSet {}", dataSetSize);
         //We find out whether the dataset is of 1 dimension, 2 or n dimension. We only need to find any one element of the dataset, and calculate it size
@@ -291,10 +201,8 @@ public class ParallelDBScan implements IDbScan {
             }
         }
 
-        cornerPointsList.forEach( cornerPoints -> log.debug("CornerPoint {}", cornerPoints));
-
         //Now that we have created the p^n grids corner points, time to create grids
-        final Multimap<String, double[]> gridPointRepository =  ArrayListMultimap.create();
+        final Multimap<String, double[]> gridPointRepository =  LinkedListMultimap.create();
 
         for(final double[] dataPoint : dataSet) {
             for(final GridCornerPoints cornerPoints : cornerPointsList) {
@@ -309,9 +217,9 @@ public class ParallelDBScan implements IDbScan {
                 final double yOrdinate = dataPoint[1];
 
                 if(
-                   (xOrdinate >= minX && xOrdinate < maxX) //Because it is RightSideOpen
-                && (yOrdinate >= minY && yOrdinate < maxY)
-                )
+                  (xOrdinate >= minX && xOrdinate < maxX) //Because it is RightSideOpen
+                  && (yOrdinate >= minY && yOrdinate < maxY)
+                        )
                 {
                     log.debug("Point {} belongs to {}", Arrays.toString(dataPoint), cornerPoints);
                     gridPointRepository.put(cornerPoints.getGridId(), dataPoint);
@@ -320,167 +228,245 @@ public class ParallelDBScan implements IDbScan {
             }
         }
 
-        //THIS HAS TO CHANGE LATER
+        //Here is where we are supposed to split recursively, but we don't.
         final int totalGrids = (int) Math.pow(partitions, dimension);
         final List<Grid> grids = cornerPointsList.stream()
                                                  .map(it -> {
-                                                     final List<double[]> initialPoints = (List<double[]>) gridPointRepository.get(it.getGridId());
-                                                     GridLabel gridLabel = NOT_DENSE;
-                                                     //We now extend the grid to epsilon in every direction
-                                                     final int gridSize = initialPoints.size();
-                                                     if(gridSize  >= ( 2 *  (dataSetSize / totalGrids)) ) {
-                                                         gridLabel = DENSE;
-                                                     }
-                                                     return new Grid(initialPoints, gridLabel, it.getGridId() , it);
+                                                    final List<double[]> initialPoints = (List<double[]>) gridPointRepository.get(it.getGridId());
+                                                    GridLabel gridLabel = NOT_DENSE;
+                                                    //We now extend the grid to epsilon in every direction
+                                                    final int gridSize = initialPoints.size();
+                                                    if(gridSize  >= ( 2 *  (dataSetSize / totalGrids)) ) {
+                                                        gridLabel = DENSE;
+                                                    }
+                                                    return new Grid(initialPoints, gridLabel, it.getGridId() , it);
                                                 }).collect(Collectors.toList());
 
         return grids;
     }
 
 
-    private static double strideSize(final double min, final double max, final int p) {
-        return Precision.round((max - min )/ p, 2, BigDecimal.ROUND_HALF_DOWN);
-    }
+    private SetMultimap<String, Grid> buildExtendedGrids(
+            final List<Grid> grids,
+            final Map<String, Set<Grid>> adjacencyListOfNbrs,
+            final Map<double[], String> gridCache)
 
+    {
+        final SetMultimap<String, Grid> result = HashMultimap.create();
+        for(final Grid grid : grids) {
+            final String gridId = grid.getId();
+            final List<double[]> pointsFromAdjacentNeighbours = mergeGrids(adjacencyListOfNbrs.get(gridId));
+            final List<double[]> points = grid.getDataPoints();
+            final Map<double[], Boolean> visited = new HashMap<>();
+            int index = 0;
+            while(index < points.size() ) {
+                final double[] current = points.get(index);
+                index ++;
+                if(isNull(visited.get(current))) {
+                    visited.put(current, true);
+                    final List<double[]> neighbours = getNeighbours(current, pointsFromAdjacentNeighbours, epsilon);
+                    if (!isNullOrEmpty(neighbours)) {
+                        for(final double[] neighbour : neighbours) {
+                            final String neighbourPointGridId = gridCache.get(neighbour);
+                            final Grid neighbourPointGrid = grids.stream().filter(g -> g.getId().equalsIgnoreCase(neighbourPointGridId)).findFirst().get();
 
-//    private static Multimap<String, Grid> createAdjacencyListOfNeighbours(final List<Grid> grids) {
-//        //Create adjacency list of neighbours
-//        final Multimap<String, Grid> result = ArrayListMultimap.create();
-//        for(final Grid grid : grids) {
-//            final GridCornerPoints gridCornerPoints = grid.getCornerPoints();
-//            for(final Grid otherGrid : grids) {
-//                if(!Objects.equals(grid, otherGrid)) {
-//                    final GridCornerPoints otherGridCornerPoints = otherGrid.getCornerPoints();
-//                    if(gridCornerPoints.hasAnyBoundaryPointCommon(otherGridCornerPoints)) {
-//                        result.put(grid.getId(), otherGrid);
-//                    }
-//                }
-//            }
-//        }
-//        return result;
-//    }
-
-
-    private static Cluster mergeClusters(final List<Cluster> clusters) {
-        List<double[]> distinctPoints = new ArrayList<>();
-        for(final Cluster cluster : clusters) {
-            final List<double[]> points = cluster.getDataPoints();
-            distinctPoints.addAll(points);
+                            if(!Objects.equals(grid, neighbourPointGrid)) {
+                                grid.addExtendedPoints(neighbour);
+                                result.put(gridId, neighbourPointGrid);
+                            }
+                        }
+                    }
+                }
+            }
         }
-        distinctPoints = distinctPoints.stream().distinct().collect(toList());
-        return new Cluster(distinctPoints);
-    }
-
-    private  List<ExtendedGrid> buildExtendedGrids(final List<Grid> grids, final double epsilon) {
-        final List<ExtendedGrid> extendedGrids = grids.stream()
-                                                      .map(grid -> {
-                                                            final List<double[]> gridPoints = grid.getDataPoints();
-                                                            final GridCornerPoints cornerPoints = grid.getCornerPoints();
-                                                            final RightOpenInterval xAxisInterval = cornerPoints.getxAxisCornerPoints();
-                                                            final RightOpenInterval yAxisInterval = cornerPoints.getyAxisCornerPoints();
-                                                            final double extendedMinX  = xAxisInterval.getStart() - epsilon;
-                                                            final double extendedMaxX  = xAxisInterval.getEnd() + epsilon;
-                                                            final double extendedMinY = yAxisInterval.getStart() - epsilon;
-                                                            final double extendedMaxY  = yAxisInterval.getEnd() + epsilon;
-
-                                                            for(final double[] point : dataSet) {
-                                                                final double xOrdinate = point[0];
-                                                                final double yOrdinate = point[1];
-                                                                if( (xOrdinate >= extendedMinX && xOrdinate < extendedMaxX)
-                                                                 && (yOrdinate >= extendedMinY && yOrdinate < extendedMaxY)
-                                                                )
-                                                                {
-                                                                    gridPoints.add(point);
-                                                                }
-                                                            }
-                                                            return new ExtendedGrid(grid, epsilon);
-                                                      })
-                                                      .collect(toList());
-        return extendedGrids;
-    }
-
-
-    private boolean isWithinEpsilonBoundary(final double[] point, final GridCornerPoints cornerPoints, final double epsilon) {
-        final RightOpenInterval xAxisInterval = cornerPoints.getxAxisCornerPoints();
-        final RightOpenInterval yAxisInterval = cornerPoints.getyAxisCornerPoints();
-        final double extendedMinX  = xAxisInterval.getStart() - epsilon;
-        final double extendedMaxX  = xAxisInterval.getEnd() + epsilon;
-        final double extendedMinY = yAxisInterval.getStart() - epsilon;
-        final double extendedMaxY  = yAxisInterval.getEnd() + epsilon;
-
-        final double xOrdinate = point[0];
-        final double yOrdinate = point[1];
-        boolean result = false;
-        if( (xOrdinate >= extendedMinX && xOrdinate < extendedMaxX)
-                && (yOrdinate >= extendedMinY && yOrdinate < extendedMaxY)
-                )
-        {
-            result = true;
-        }
-
         return result;
     }
 
 
-    private static void printToCsv(final List<Grid> grids) throws IOException {
-        final CSVWriter writer = new CSVWriter(new FileWriter("/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/test.csv"),
-                                               CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
-        final List<String[]> headers = new ArrayList<>();
-        headers.add(new String[]{"id", "label", "x", "y"});
-        writer.writeAll(headers);
-
+    private List<ComplexGrid> buildDenseComplexGrids(final List<Grid> grids, final Map<String, Collection<Grid>> epsilonNbdGridsList) {
+        final List<ComplexGrid> denseComplexGrids = new ArrayList<>();
+        //Merge dense grids together
         for(final Grid grid : grids) {
-            final List<String[]> output = new ArrayList<>();
-            for(final double[] point : grid.getDataPoints()) {
-                output.add(new String[]{grid.getId(), grid.getLabel().name(), String.valueOf(point[0]), String.valueOf(point[1])});
+            if(grid.isDense()) {
+                final String gridId = grid.getId();
+                Set<Grid> gridsInEpsilonNbd = (Set<Grid>) epsilonNbdGridsList.get(gridId);
+                if(isNullOrEmpty(gridsInEpsilonNbd)) {
+                    gridsInEpsilonNbd = Collections.emptySet();
+                }
+                // Any grid that is in under epsilon nbd of a grid and shares a point with a grid, and is also dense , is adjacent
+                final Set<Grid> adjacentGrids = gridsInEpsilonNbd.stream()
+                                                                 .filter(Grid ::isDense)
+                                                                 .collect(Collectors.toSet());
+                final List<Grid> complexGrids = new ArrayList<>(adjacentGrids);
+                complexGrids.add(grid);
+                denseComplexGrids.add(new ComplexGrid(complexGrids));
             }
-            writer.writeAll(output);
         }
-        writer.close();
+        return denseComplexGrids;
     }
 
 
+    private List<Cluster> mergeClusters(final List<Cluster> clusters) {
+        final Iterator<Cluster> iterator = clusters.iterator();
+        while(iterator.hasNext()) {
+            final Cluster currentCluster = iterator.next();
+            final Iterator<Cluster> visitedIterator = clusters.iterator();
+            while(visitedIterator.hasNext()) {
+                final Cluster visitedCluster = visitedIterator.next();
+                if(!Objects.equals(visitedCluster, currentCluster)) {
+                    final Set<double[]> sharedPoints = currentCluster.getCommonPoints(visitedCluster);
+                    boolean toMerge = false;
+                    final Map<double[], List<double[]>> sharedPointEpsilonNbdMap = new HashMap<>();
+                    List<double[]> mergedDataPoints;
+                    if(!isNullOrEmpty(sharedPoints)) {
+                        mergedDataPoints = merge(Arrays.asList(currentCluster, visitedCluster));
+                        for(double[] sharedPoint : sharedPoints) {
+                            final List<double[]> nbd = getNeighbours(sharedPoint, mergedDataPoints, epsilon);
+                            sharedPointEpsilonNbdMap.put(sharedPoint, nbd);
+                        }
+                        for(final Entry<double[], List<double[]>> sharedPointNbd : sharedPointEpsilonNbdMap.entrySet()) {
+                            final List<double[]> nbd = sharedPointNbd.getValue();
+                            if(nbd.size() >= minPts) {
+                                toMerge = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(toMerge) {
+                        //Destroy visitedCluster from cluster
+                        currentCluster.addDataPoints(visitedCluster.getDataPoints());
+                        visitedIterator.remove();
+                        return mergeClusters(clusters);
+                    }
+                    else {
+                        for(double[] sharedPoint : sharedPoints) {
+                            final List<double[]> currentClusterPoints = currentCluster.getDataPoints();
+                            final List<double[]> visitedClusterPoints = visitedCluster.getDataPoints();
+                            final List<double[]> currentClusterNbd = getNeighbours(sharedPoint, currentClusterPoints, epsilon);
+                            final List<double[]> visitedClusterNbd = getNeighbours(sharedPoint, visitedClusterPoints, epsilon);
+                            if(currentClusterNbd.size() > visitedClusterNbd.size()) {
+                                visitedCluster.remove(sharedPoint);
+                            }
+                            else if(currentClusterNbd.size() == visitedClusterNbd.size()) {
+                                final double distanceCurrentCluster = getNeighboursDistance(sharedPoint, currentClusterPoints);
+                                final double distanceVisitedCluster = getNeighboursDistance(sharedPoint, visitedClusterPoints);
+                                if(distanceCurrentCluster >= distanceVisitedCluster) {
+                                    currentCluster.remove(sharedPoint);
+                                }
+                                else {
+                                    visitedCluster.remove(sharedPoint);
+                                }
+                            }
+                            else {
+                                currentCluster.remove(sharedPoint);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return clusters;
+    }
+
+   private double getNeighboursDistance(final double[] point, final List<double[]> neighbours) {
+        double addedDistance = ZERO;
+        for(final double[] dataPoint : neighbours) {
+            final double distance = computeEuclideanDistance(point, dataPoint);
+            addedDistance += distance;
+        }
+        return addedDistance;
+    }
+
+    private static List<double[]> merge(List<Cluster> list) {
+        return list
+                .stream()
+                .map(Cluster::getDataPoints)
+                .flatMap(Collection :: stream)
+                .distinct()
+                .collect(toList());
+    }
+
+    private List<double[]> mergeGrids(final Set<Grid> grids) {
+        return grids.stream().map(Grid::getDataPoints)
+                            .flatMap(Collection :: stream)
+                            .collect(Collectors.toList());
+    }
+
+    private static Map<String, Set<Grid>> createAdjacencyListOfNeighbours(final List<Grid> grids, final double epsilon) {
+        final Map<String, Set<Grid>> adjacencyList = new HashMap<>();
+        for(final Grid grid : grids) {
+            final GridCornerPoints cornerPoints = grid.getCornerPoints();
+            final RightOpenInterval xInterval = cornerPoints.getxAxisCornerPoints();
+            final RightOpenInterval yInterval = cornerPoints.getyAxisCornerPoints();
+
+            final double minX = xInterval.getStart();
+            final double maxX = xInterval.getEnd();
+            final double minY = yInterval.getStart();
+            final double maxY = yInterval.getEnd();
+
+            //Extend episloon in each direction
+            final double extendedMinX = minX - epsilon;
+            final double extendedMaxX = maxX + epsilon;
+            final double extendedMinY = minY - epsilon;
+            final double extendedMaxY = maxY + epsilon;
+            final Set<Grid> adjacentGrids = new HashSet<>();
+            for(final Grid otherGrid : grids) {
+                if(!Objects.equals(grid, otherGrid)) {
+                    final GridCornerPoints otherGridCornerPoints = otherGrid.getCornerPoints();
+                    final RightOpenInterval xIntervalOtherGrid = otherGridCornerPoints.getxAxisCornerPoints();
+                    final RightOpenInterval yIntervalOtherGrid = otherGridCornerPoints.getyAxisCornerPoints();
+
+                    final double minXOtherGrid = xIntervalOtherGrid.getStart();
+                    final double maxXOtherGrid = xIntervalOtherGrid.getEnd();
+                    final double minYOtherGrid = yIntervalOtherGrid.getStart();
+                    final double maxYOtherGrid = yIntervalOtherGrid.getEnd();
+
+                    if(
+                            (extendedMinX <= maxXOtherGrid && maxXOtherGrid <= minX && extendedMaxY >= minYOtherGrid && extendedMinY <= maxYOtherGrid) ||
+                                    (extendedMaxY >= minYOtherGrid  && extendedMinY <= maxYOtherGrid && minX == minXOtherGrid && maxX == maxXOtherGrid) ||
+                                    (maxX <= maxXOtherGrid  && extendedMaxX >= minXOtherGrid && extendedMaxY >= minYOtherGrid && extendedMinY <= maxYOtherGrid)
+                            )
+                    {
+                        adjacentGrids.add(otherGrid);
+                    }
+
+                }
+            }
+            adjacencyList.putIfAbsent(grid.getId(), adjacentGrids);
+        }
+        return adjacencyList;
+    }
+
+
+
+
+
+    @SuppressWarnings("Duplicates")
     public static void main(String[] args) throws Exception {
-
-//        List<double[]> points = Arrays.asList(
-//                new double[]{1, 2},
-//                new double[]{0, 1} ,
-//                new double[]{9, 8},
-//                new double[]{11, 13},
-//                new double[]{7, 9},
-//                new double[]{6, 8}
-//        );
-
-        String fileLocation = "/Users/ankushsharma/Downloads/Factice_2Dexample.csv";
+        String fileLocation = "/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/Factice_2Dexample.csv";
         List<double[]> dataSet = Files.readAllLines(Paths.get(fileLocation))
                                       .stream()
                                       .map(string -> string.split(",")) // Each line is a string, we break it based on delimiter ',' . This gives us an array
-                                      .skip(1) //Skip the header
-                                      .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
-                                      .collect(Collectors.toList());
+                                        .skip(1) //Skip the header
+                                        .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
+                                        .collect(Collectors.toList());
 
 
         double epsilon = 10;
         int minPts = 5;
-//        DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
+        int workers = Runtime.getRuntime().availableProcessors();
 
         ParallelDBScan parallelDBScan = new ParallelDBScan(
-                dataSet, epsilon, minPts, 2
+                dataSet, epsilon, minPts, 9, workers
         );
+        List<Cluster> clusters = parallelDBScan.compute();
 
-        parallelDBScan.compute();
+        for(Cluster cluster : clusters) {
+            System.out.println(cluster.getSize());
+        }
 
-
-//        List<double[]> points = Arrays.asList(
-//                new double[]{1.1},
-//                new double[]{2.1},
-//                new double[]{4.1}
-//        );
-//        List<Grid> grids = splitIntoGrids(dataSet, 8);
-//        for (Grid grid : grids) {
-//            System.out.println(grid);
-//        }
     }
+
 
 
 }

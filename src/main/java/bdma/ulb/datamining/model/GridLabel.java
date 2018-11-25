@@ -4,4 +4,5 @@ public enum GridLabel {
 
     DENSE,
     NOT_DENSE
+
 }

@@ -3,7 +3,6 @@ package bdma.ulb.datamining.algo;
 import bdma.ulb.datamining.model.Cluster;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static bdma.ulb.datamining.util.Numbers.ZERO;

@@ -8,7 +8,6 @@ import java.util.*;
 
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static java.util.Objects.isNull;
-import static java.util.stream.Collectors.toList;
 
 public class DBScan implements IDbScan {
 

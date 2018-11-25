@@ -4,12 +4,11 @@ import bdma.ulb.datamining.util.Assert;
 import bdma.ulb.datamining.util.Util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 public class Grid {
 
@@ -27,13 +26,15 @@ public class Grid {
     )
     {
         Assert.notNull(label, "label cannot be null");
-        Assert.notNull(label, "cornerPoints cannot be null");
+        Assert.notNull(cornerPoints, "cornerPoints cannot be null");
+        Assert.notNull(dataPoints, "dataPoints cannot be null");
+        Assert.notNull(id, "gridId cannot be null");
 
         this.dataPoints = dataPoints;
         this.label = label;
         this.id = id;
         this.cornerPoints = cornerPoints;
-        this.extendedPoints = new ArrayList<>();
+        this.extendedPoints = new LinkedList<>();
     }
 
     public void addExtendedPoints(final double[] point) {
@@ -46,7 +47,7 @@ public class Grid {
         return points.stream().distinct().collect(toList());
     }
 
-    public int getCount() {
+    private int getCount() {
         return (int) getAllPoints().stream().distinct().count();
     }
 

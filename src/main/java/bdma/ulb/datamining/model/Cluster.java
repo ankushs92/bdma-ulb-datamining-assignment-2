@@ -1,7 +1,11 @@
 package bdma.ulb.datamining.model;
 
-import java.util.List;
+import org.apache.commons.collections.CollectionUtils;
+
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public class Cluster {
 
@@ -16,16 +20,41 @@ public class Cluster {
     }
 
     public int getSize() {
-        return dataPoints.stream().distinct().collect(Collectors.toList()).size();
+        return dataPoints.stream().distinct().collect(toList()).size();
+    }
+
+    public void addDataPoints(final List<double[]> morePoints) {
+        dataPoints.addAll(morePoints);
+    }
+
+    public Set<double[]> getCommonPoints(final Cluster otherCluster) {
+        final List<double[]> otherDataPoints = otherCluster.getDataPoints();
+        return (Set<double[]>) CollectionUtils.intersection(dataPoints, otherDataPoints).stream().collect(Collectors.toSet());
+    }
+
+    public boolean remove(final double[] point) {
+          return dataPoints.removeAll(Arrays.asList(point));
     }
 
 
-    public boolean doesPointBelongToCluster(final double[] points) {
-        boolean result = false;
-        if(dataPoints.contains(points)) {
-            result = true;
-        }
-        return result;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Cluster cluster = (Cluster) o;
+        return Objects.equals(dataPoints, cluster.dataPoints);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dataPoints);
+    }
+
+    @Override
+    public String toString() {
+        return "Cluster{" +
+                "dataPoints=" + dataPoints +
+                '}';
     }
 
 }
