@@ -24,12 +24,12 @@ First, put the file location in fileLocation variable.
         int minPts = 5;
 
         DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
-        List<List<double[]>> clusters = dbScan.compute();
+        List<Cluster> clusters = dbScan.compute();
 
-        for(List<double[]> cluster : clusters) {
-            //This had to be done because the default toString representation of double[] is just the hash code
-            System.out.println(stringRepresentation(cluster));
-            System.out.println(cluster.size());
+        long stop = System.currentTimeMillis();
+        System.out.println("Time taken " + (stop-start) / 1000) ;
+        for(Cluster cluster : clusters) {
+            System.out.println(cluster.getSize());
         }
 
 

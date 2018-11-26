@@ -482,7 +482,7 @@ public class ParallelDBScan implements IDbScan {
         int workers = Runtime.getRuntime().availableProcessors();
 
         ParallelDBScan parallelDBScan = new ParallelDBScan(
-                dataSet, epsilon, minPts, 8, workers
+                dataSet, epsilon, minPts, 15, workers
         );
         List<Cluster> clusters = parallelDBScan.compute();
 
