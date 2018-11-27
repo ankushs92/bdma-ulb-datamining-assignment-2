@@ -2,7 +2,6 @@ package bdma.ulb.datamining.algo;
 
 import bdma.ulb.datamining.model.*;
 import bdma.ulb.datamining.util.Assert;
-import bdma.ulb.datamining.util.Util;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
@@ -12,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -67,10 +64,15 @@ public class ParallelDBScan implements AbstractDbScan {
 
     @Override
     public List<Cluster> compute() throws Exception {
+        long start = System.currentTimeMillis();
+        log.info("Number of Workers {}", workers);
         final int totalGrids = (int) Math.pow(partitions, 2);
         log.info("Creating {} grids", totalGrids);
         // First, divide the dataset into "partitions" number of grids
         final List<Grid> grids = splitIntoGrids(dataSet, partitions);
+        long stop = System.currentTimeMillis();
+
+        log.info("Time taken to build {} grids is {} seconds", totalGrids, toSeconds(stop - start));
 
         //Build a Cache of Grid points. Each key is a point in the dataset, and has the "Grid Id" as value associated with it
         log.info("Building Grid Cache");
@@ -82,8 +84,11 @@ public class ParallelDBScan implements AbstractDbScan {
             log.info("Grid Id {} . Adjacency list -> {}", k, getGridIds(v));
         });
 
-
+        start = System.currentTimeMillis();
         final SetMultimap<String, Grid> candidateEpsNbdGridsMultiMap = buildExtendedGrids(grids, adjacencyListOfNeighbours, gridCache);
+        stop = System.currentTimeMillis();
+
+        log.info("Time taken to extend the Grids and compute neighbourhood of points is {}", toSeconds(stop - start));
 
         final Map<String, Collection<Grid>> epsilonNbdGridsList = candidateEpsNbdGridsMultiMap.asMap();
 
@@ -103,10 +108,10 @@ public class ParallelDBScan implements AbstractDbScan {
         //We need List of all Complex Grids, be it dense or non dense
         final List<ComplexGrid> allComplexGrids = new ArrayList<>(nonDenseComplexGrids);
         allComplexGrids.addAll(denseComplexGrids);
-        Util.printComplexGrids(allComplexGrids);
 
         //We perform parallel DB Scan
         log.info("Preparing to run parallel DB Scan");
+        start = System.currentTimeMillis();
         final List<Future<PartitionResult>> resultPoolFutures = performParallelDbScan(allComplexGrids);
 
         //Each DB Scan result is now available as a Java Future. Simply loop over all futures, and get the result from each worker thread
@@ -116,25 +121,31 @@ public class ParallelDBScan implements AbstractDbScan {
             parallelComputationResults.add(partitionResult);
         }
         log.info("Parallel DB Scan executed successfully");
+        stop = System.currentTimeMillis();
+        log.info("Time taken to Perform parallel Db scan is {}", toSeconds(stop - start));
         final List<Cluster> clusters = parallelComputationResults.stream()
                                                                  .map(PartitionResult::getClusters)
                                                                  .flatMap(Collection :: stream)
                                                                  .collect(toList());
 
         log.info("Attempting to Merge clusters. We have {} clusters to merge", clusters.size());
+        start = System.currentTimeMillis();
         final List<Cluster> mergedCluster = mergeClusters(clusters);
+        stop = System.currentTimeMillis();
+
         log.info("Final Result : Number of Clusters {}", clusters.size());
+        log.info("Time taken to merge clusters is {} seconds", toSeconds(stop - start));
         mergedCluster.forEach(cluster -> {
             log.info("Cluster Size {}", cluster.getSize());
         });
 
-        Util.printClusters(mergedCluster);
         try {
             executor.shutdown();
         }
         catch(final Exception ex) {
             log.error("" ,ex);
         }
+
         return mergedCluster;
     }
 
@@ -196,7 +207,7 @@ public class ParallelDBScan implements AbstractDbScan {
             final double max = projectionSorted.get(size - 1);
             //Adjusting a delta in the end so that all points are covered
             final double strideSize = strideSize(min, max, partitions) + DELTA;
-            log.info("Dimension : {}, Stride Size {}", dimension, strideSize);
+            log.info("Dimension : {}, Stride Size {}", currentDimension, strideSize);
 
             final List<RightOpenInterval> intervals = new ArrayList<>();
             for(int i = 1; i <= partitions; i ++) {
@@ -273,8 +284,8 @@ public class ParallelDBScan implements AbstractDbScan {
     private SetMultimap<String, Grid> buildExtendedGrids(
             final List<Grid> grids,
             final Map<String, Set<Grid>> adjacencyListOfNbrs,
-            final Map<double[], String> gridCache) throws ExecutionException, InterruptedException
-
+            final Map<double[], String> gridCache
+    ) throws ExecutionException, InterruptedException
     {
         final SetMultimap<String, Grid> result = HashMultimap.create();
         for(final Grid grid : grids) {
@@ -477,32 +488,9 @@ public class ParallelDBScan implements AbstractDbScan {
                     .collect(toSet());
     }
 
-
-
-
-    @SuppressWarnings("Duplicates")
-    public static void main(String[] args) throws Exception {
-        String fileLocation = "/Users/ankushsharma/Desktop/code/dbscan/src/main/resources/Factice_2Dexample.csv";
-        List<double[]> dataSet = Files.readAllLines(Paths.get(fileLocation))
-                                      .stream()
-                                      .map(string -> string.split(",")) // Each line is a string, we break it based on delimiter ',' . This gives us an array
-                                      .skip(1) //Skip the header
-                                      .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
-                                      .collect(toList());
-
-        double epsilon = 10;
-        int minPts = 5;
-        int workers = 2;
-        int partitions = 4;
-
-        ParallelDBScan parallelDBScan = new ParallelDBScan(
-                dataSet, epsilon, minPts, partitions, workers
-        );
-        List<Cluster> clusters = parallelDBScan.compute();
-
-        for(Cluster cluster : clusters) {
-            System.out.println(cluster.getSize());
-        }
-
+    private static double toSeconds(final double ms) {
+        return ms / 1000;
     }
+
+
 }

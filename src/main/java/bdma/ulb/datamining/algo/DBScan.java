@@ -100,5 +100,4 @@ public class DBScan implements AbstractDbScan {
         return one;
     }
 
-
 }
