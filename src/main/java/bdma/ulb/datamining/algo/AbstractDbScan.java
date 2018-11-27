@@ -7,7 +7,7 @@ import java.util.List;
 
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 
-public interface IDbScan {
+public interface AbstractDbScan {
 
     List<Cluster> compute() throws Exception;
 

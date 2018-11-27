@@ -16,10 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import static bdma.ulb.datamining.model.GridLabel.DENSE;
 import static bdma.ulb.datamining.model.GridLabel.NOT_DENSE;
@@ -28,8 +28,9 @@ import static bdma.ulb.datamining.util.Util.isNullOrEmpty;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
-public class ParallelDBScan implements IDbScan {
+public class ParallelDBScan implements AbstractDbScan {
 
     private static final Logger log = LoggerFactory.getLogger(ParallelDBScan.class);
     private final ExecutorService executor;
@@ -65,9 +66,9 @@ public class ParallelDBScan implements IDbScan {
     }
 
     @Override
-    @SuppressWarnings("Duplicates")
     public List<Cluster> compute() throws Exception {
-        log.info("Creating {} grids", Math.pow(partitions,2 ));
+        final int totalGrids = (int) Math.pow(partitions, 2);
+        log.info("Creating {} grids", totalGrids);
         // First, divide the dataset into "partitions" number of grids
         final List<Grid> grids = splitIntoGrids(dataSet, partitions);
 
@@ -78,7 +79,7 @@ public class ParallelDBScan implements IDbScan {
         log.info("Building Adjacency List of neighbours");
         final Map<String, Set<Grid>> adjacencyListOfNeighbours = createAdjacencyListOfNeighbours(grids,epsilon);
         adjacencyListOfNeighbours.forEach((k, v) -> {
-            log.info("Grid Id {} . Adjacency list ->", k, getGridIds(v));
+            log.info("Grid Id {} . Adjacency list -> {}", k, getGridIds(v));
         });
 
 
@@ -87,7 +88,7 @@ public class ParallelDBScan implements IDbScan {
         final Map<String, Collection<Grid>> epsilonNbdGridsList = candidateEpsNbdGridsMultiMap.asMap();
 
         for(final Entry<String, Collection<Grid>> entry : epsilonNbdGridsList.entrySet()) {
-            log.info("Grid Id : {}, Epsilon Nbd grids ----> ", entry.getKey(), entry.getValue().stream().map(Grid::getId).collect(toList()));
+            log.info("Grid Id : {}, Epsilon Nbd grids ----> {}", entry.getKey(), entry.getValue().stream().map(Grid::getId).collect(toList()));
         }
 
         final List<ComplexGrid> denseComplexGrids = buildDenseComplexGrids(grids, epsilonNbdGridsList);
@@ -97,7 +98,7 @@ public class ParallelDBScan implements IDbScan {
                                                             .map(grid -> new ComplexGrid(singletonList(grid)))
                                                             .collect(toList());
 
-        log.info("Number of Non Desne Complex Grids formed  {}", nonDenseComplexGrids.size());
+        log.info("Number of Non Dense Complex Grids formed  {}", nonDenseComplexGrids.size());
 
         //We need List of all Complex Grids, be it dense or non dense
         final List<ComplexGrid> allComplexGrids = new ArrayList<>(nonDenseComplexGrids);
@@ -111,8 +112,8 @@ public class ParallelDBScan implements IDbScan {
         //Each DB Scan result is now available as a Java Future. Simply loop over all futures, and get the result from each worker thread
         final List<PartitionResult> parallelComputationResults = new ArrayList<>();
         for(final Future<PartitionResult> resultFuture : resultPoolFutures) {
-            final PartitionResult pResult = resultFuture.get();
-            parallelComputationResults.add(pResult);
+            final PartitionResult partitionResult = resultFuture.get(); //Waits indefinitely for the worker to finish off its task.
+            parallelComputationResults.add(partitionResult);
         }
         log.info("Parallel DB Scan executed successfully");
         final List<Cluster> clusters = parallelComputationResults.stream()
@@ -156,6 +157,7 @@ public class ParallelDBScan implements IDbScan {
     private List<Future<PartitionResult>> performParallelDbScan(final List<ComplexGrid> complexGrids) {
         final List<Future<PartitionResult>> resultPoolFutures = new ArrayList<>();
         for(final ComplexGrid complexGrid : complexGrids) {
+            //You get the first complex grid
             final Future<PartitionResult> result = executor.submit( () -> {
                 final List<double[]> dataSet = complexGrid.getAllPoints();
                 final DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
@@ -192,8 +194,9 @@ public class ParallelDBScan implements IDbScan {
             final int size = projectionSorted.size();
             final double min = projectionSorted.get(0);
             final double max = projectionSorted.get(size - 1);
+            //Adjusting a delta in the end so that all points are covered
             final double strideSize = strideSize(min, max, partitions) + DELTA;
-            log.info("Stride Size {}", strideSize);
+            log.info("Dimension : {}, Stride Size {}", dimension, strideSize);
 
             final List<RightOpenInterval> intervals = new ArrayList<>();
             for(int i = 1; i <= partitions; i ++) {
@@ -239,8 +242,8 @@ public class ParallelDBScan implements IDbScan {
 
                 if(
                   (xOrdinate >= minX && xOrdinate < maxX) //Because it is RightSideOpen
-                  && (yOrdinate >= minY && yOrdinate < maxY)
-                        )
+               && (yOrdinate >= minY && yOrdinate < maxY)
+                )
                 {
                     log.debug("Point {} belongs to {}", Arrays.toString(dataPoint), cornerPoints);
                     gridPointRepository.put(cornerPoints.getGridId(), dataPoint);
@@ -261,7 +264,7 @@ public class ParallelDBScan implements IDbScan {
                                                         gridLabel = DENSE;
                                                     }
                                                     return new Grid(initialPoints, gridLabel, it.getGridId() , it);
-                                                }).collect(Collectors.toList());
+                                                }).collect(toList());
 
         return grids;
     }
@@ -270,7 +273,7 @@ public class ParallelDBScan implements IDbScan {
     private SetMultimap<String, Grid> buildExtendedGrids(
             final List<Grid> grids,
             final Map<String, Set<Grid>> adjacencyListOfNbrs,
-            final Map<double[], String> gridCache)
+            final Map<double[], String> gridCache) throws ExecutionException, InterruptedException
 
     {
         final SetMultimap<String, Grid> result = HashMultimap.create();
@@ -280,28 +283,39 @@ public class ParallelDBScan implements IDbScan {
             final List<double[]> points = grid.getDataPoints();
             final Map<double[], Boolean> visited = new HashMap<>();
             int index = 0;
+            //Since computing neighbourhoods can be time consuming
+            final List<Future<List<double[]>>> neighbourhoodFutures = new ArrayList<>();
             while(index < points.size() ) {
                 final double[] current = points.get(index);
                 index ++;
                 if(isNull(visited.get(current))) {
                     visited.put(current, true);
-                    final List<double[]> neighbours = getNeighbours(current, pointsFromAdjacentNeighbours, epsilon);
-                    if (!isNullOrEmpty(neighbours)) {
-                        for(final double[] neighbour : neighbours) {
-                            final String neighbourPointGridId = gridCache.get(neighbour);
-                            final Grid neighbourPointGrid = grids.stream().filter(g -> g.getId().equalsIgnoreCase(neighbourPointGridId)).findFirst().get();
+                    neighbourhoodFutures.add(computeNeighboursParallel(current, pointsFromAdjacentNeighbours, epsilon));
+                }
+            }
+            for(final Future<List<double[]>> neighbourhoodFuture : neighbourhoodFutures) {
+                final List<double[]> neighbours = neighbourhoodFuture.get();
+                if (!isNullOrEmpty(neighbours)) {
+                    for(final double[] neighbour : neighbours) {
+                        final String neighbourPointGridId = gridCache.get(neighbour);
+                        final Grid neighbourPointGrid = grids.stream().filter(g -> g.getId().equalsIgnoreCase(neighbourPointGridId)).findFirst().get();
 
-                            if(!Objects.equals(grid, neighbourPointGrid)) {
-                                grid.addExtendedPoints(neighbour);
-                                result.put(gridId, neighbourPointGrid);
-                            }
+                        if(!Objects.equals(grid, neighbourPointGrid)) {
+                            grid.addExtendedPoints(neighbour);
+                            result.put(gridId, neighbourPointGrid);
                         }
                     }
                 }
+
             }
         }
         return result;
     }
+
+    private Future<List<double[]>> computeNeighboursParallel(double[] point, List<double[]> dataSet, double epsilon) {
+        return executor.submit( () -> getNeighbours(point, dataSet, epsilon));
+    }
+
 
 
     private List<ComplexGrid> buildDenseComplexGrids(final List<Grid> grids, final Map<String, Collection<Grid>> epsilonNbdGridsList) {
@@ -317,7 +331,7 @@ public class ParallelDBScan implements IDbScan {
                 // Any grid that is in under epsilon nbd of a grid and shares a point with a grid, and is also dense , is adjacent
                 final Set<Grid> adjacentGrids = gridsInEpsilonNbd.stream()
                                                                  .filter(Grid ::isDense)
-                                                                 .collect(Collectors.toSet());
+                                                                 .collect(toSet());
                 final List<Grid> complexGrids = new ArrayList<>(adjacentGrids);
                 complexGrids.add(grid);
                 denseComplexGrids.add(new ComplexGrid(complexGrids));
@@ -410,7 +424,7 @@ public class ParallelDBScan implements IDbScan {
     private List<double[]> mergeGrids(final Set<Grid> grids) {
         return grids.stream().map(Grid::getDataPoints)
                             .flatMap(Collection :: stream)
-                            .collect(Collectors.toList());
+                            .collect(toList());
     }
 
     private static Map<String, Set<Grid>> createAdjacencyListOfNeighbours(final List<Grid> grids, final double epsilon) {
@@ -444,13 +458,12 @@ public class ParallelDBScan implements IDbScan {
 
                     if(
                             (extendedMinX <= maxXOtherGrid && maxXOtherGrid <= minX && extendedMaxY >= minYOtherGrid && extendedMinY <= maxYOtherGrid) ||
-                                    (extendedMaxY >= minYOtherGrid  && extendedMinY <= maxYOtherGrid && minX == minXOtherGrid && maxX == maxXOtherGrid) ||
-                                    (maxX <= maxXOtherGrid  && extendedMaxX >= minXOtherGrid && extendedMaxY >= minYOtherGrid && extendedMinY <= maxYOtherGrid)
-                            )
+                            (extendedMaxY >= minYOtherGrid  && extendedMinY <= maxYOtherGrid && minX == minXOtherGrid && maxX == maxXOtherGrid) ||
+                            (maxX <= maxXOtherGrid  && extendedMaxX >= minXOtherGrid && extendedMaxY >= minYOtherGrid && extendedMinY <= maxYOtherGrid)
+                     )
                     {
                         adjacentGrids.add(otherGrid);
                     }
-
                 }
             }
             adjacencyList.putIfAbsent(grid.getId(), adjacentGrids);
@@ -458,11 +471,12 @@ public class ParallelDBScan implements IDbScan {
         return adjacencyList;
     }
 
-    public Set<String> getGridIds(final Set<Grid> grids) {
+    private Set<String> getGridIds(final Set<Grid> grids) {
         return grids.stream()
                     .map(Grid::getId)
-                    .collect(Collectors.toSet());
+                    .collect(toSet());
     }
+
 
 
 
@@ -472,17 +486,17 @@ public class ParallelDBScan implements IDbScan {
         List<double[]> dataSet = Files.readAllLines(Paths.get(fileLocation))
                                       .stream()
                                       .map(string -> string.split(",")) // Each line is a string, we break it based on delimiter ',' . This gives us an array
-                                        .skip(1) //Skip the header
-                                        .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
-                                        .collect(Collectors.toList());
-
+                                      .skip(1) //Skip the header
+                                      .map(array -> new double[]{Double.valueOf(array[1]), Double.valueOf(array[2])}) // The 2nd and 3rd column in the csv file
+                                      .collect(toList());
 
         double epsilon = 10;
         int minPts = 5;
-        int workers = Runtime.getRuntime().availableProcessors();
+        int workers = 2;
+        int partitions = 4;
 
         ParallelDBScan parallelDBScan = new ParallelDBScan(
-                dataSet, epsilon, minPts, 15, workers
+                dataSet, epsilon, minPts, partitions, workers
         );
         List<Cluster> clusters = parallelDBScan.compute();
 
@@ -491,7 +505,4 @@ public class ParallelDBScan implements IDbScan {
         }
 
     }
-
-
-
 }

@@ -35,8 +35,8 @@ public class Cluster {
         return (Set<double[]>) CollectionUtils.intersection(dataPoints, otherDataPoints).stream().collect(Collectors.toSet());
     }
 
-    public boolean remove(final double[] point) {
-          return dataPoints.removeAll(Arrays.asList(point));
+    public void remove(final double[] point) {
+        dataPoints.removeAll(Arrays.asList(point));
     }
 
 

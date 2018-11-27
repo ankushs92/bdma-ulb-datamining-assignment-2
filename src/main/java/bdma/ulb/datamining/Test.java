@@ -1,7 +1,6 @@
 package bdma.ulb.datamining;
 
 
-import bdma.ulb.datamining.algo.DBScan;
 import bdma.ulb.datamining.algo.ParallelDBScan;
 import bdma.ulb.datamining.model.Cluster;
 
@@ -28,10 +27,11 @@ public class Test {
         int partitions = 2;
         long start = System.currentTimeMillis();
 
-//        ParallelDBScan dbScan = new ParallelDBScan(dataSet, epsilon, minPts, partitions, workers);
-//        List<Cluster> clusters = dbScan.compute();
-        DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
+        ParallelDBScan dbScan = new ParallelDBScan(dataSet, epsilon, minPts, partitions, workers);
         List<Cluster> clusters = dbScan.compute();
+//        DBScan dbScan = new DBScan(dataSet, epsilon, minPts);
+//        List<Cluster> clusters = dbScan.compute();
+
 
         long stop = System.currentTimeMillis();
         System.out.println("Time taken " + (stop-start) / 1000) ;

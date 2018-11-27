@@ -3,13 +3,17 @@ package bdma.ulb.datamining.algo;
 import bdma.ulb.datamining.model.Cluster;
 import bdma.ulb.datamining.model.Label;
 import bdma.ulb.datamining.util.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 import static bdma.ulb.datamining.util.Numbers.ZERO;
 import static java.util.Objects.isNull;
 
-public class DBScan implements IDbScan {
+public class DBScan implements AbstractDbScan {
+
+    private static final Logger log = LoggerFactory.getLogger(DBScan.class);
 
     private final List<double[]> dataSet;
     private final double epsilon;
@@ -31,6 +35,7 @@ public class DBScan implements IDbScan {
 
     @Override
     public List<Cluster> compute() {
+        log.info("Starting Single threaded DB Scan on dataset with size {}", dataSet.size());
         final List<Cluster> clusters = new ArrayList<>();
         final Map<double[], Label> visitedPoints = new HashMap<>();
         for(final double[] point : dataSet) {
@@ -47,6 +52,7 @@ public class DBScan implements IDbScan {
                 }
             }
         }
+        log.info("DBScan completed for dataset with size {}", dataSet.size());
         return clusters;
     }
 
